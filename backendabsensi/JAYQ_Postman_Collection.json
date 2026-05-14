@@ -1,0 +1,585 @@
+{
+  "info": {
+    "name": "JAYQ API",
+    "description": "Backend REST API untuk aplikasi mobile absensi mahasiswa berbasis QR Code",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('token', jsonData.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@jayq.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": ["{{base_url}}"],
+              "path": ["logout"]
+            }
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user",
+              "host": ["{{base_url}}"],
+              "path": ["user"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - User Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Test User\",\n  \"email\": \"test@jayq.com\",\n  \"password\": \"password\",\n  \"role\": \"mahasiswa\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Test User Updated\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Mata Kuliah",
+      "item": [
+        {
+          "name": "Get All Mata Kuliah",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mata-kuliah",
+              "host": ["{{base_url}}"],
+              "path": ["mata-kuliah"]
+            }
+          }
+        },
+        {
+          "name": "Create Mata Kuliah",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_mk\": \"Test Mata Kuliah\",\n  \"kode_mk\": \"TEST01\",\n  \"dosen_id\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mata-kuliah",
+              "host": ["{{base_url}}"],
+              "path": ["mata-kuliah"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Peserta MK",
+      "item": [
+        {
+          "name": "Add Mahasiswa to MK",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mahasiswa_id\": 4,\n  \"mata_kuliah_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/peserta-mk",
+              "host": ["{{base_url}}"],
+              "path": ["peserta-mk"]
+            }
+          }
+        },
+        {
+          "name": "Get Peserta by MK",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mata-kuliah/1/peserta",
+              "host": ["{{base_url}}"],
+              "path": ["mata-kuliah", "1", "peserta"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dosen - QR Code",
+      "item": [
+        {
+          "name": "Generate QR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mata_kuliah_id\": 1,\n  \"duration\": 15\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate-qr",
+              "host": ["{{base_url}}"],
+              "path": ["generate-qr"]
+            }
+          }
+        },
+        {
+          "name": "Get QR Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/qr-sessions",
+              "host": ["{{base_url}}"],
+              "path": ["qr-sessions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dosen - Absensi",
+      "item": [
+        {
+          "name": "Get Rekap Absensi",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rekap-absensi",
+              "host": ["{{base_url}}"],
+              "path": ["rekap-absensi"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dosen - Tugas",
+      "item": [
+        {
+          "name": "Get All Tugas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tugas",
+              "host": ["{{base_url}}"],
+              "path": ["tugas"]
+            }
+          }
+        },
+        {
+          "name": "Create Tugas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "mata_kuliah_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "judul",
+                  "value": "Tugas 1",
+                  "type": "text"
+                },
+                {
+                  "key": "deskripsi",
+                  "value": "Deskripsi tugas",
+                  "type": "text"
+                },
+                {
+                  "key": "deadline",
+                  "value": "2026-05-20 23:59:59",
+                  "type": "text"
+                },
+                {
+                  "key": "file_tugas",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/tugas",
+              "host": ["{{base_url}}"],
+              "path": ["tugas"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dosen - Materi",
+      "item": [
+        {
+          "name": "Upload Materi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "mata_kuliah_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "judul",
+                  "value": "Materi 1",
+                  "type": "text"
+                },
+                {
+                  "key": "deskripsi",
+                  "value": "Deskripsi materi",
+                  "type": "text"
+                },
+                {
+                  "key": "file_materi",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/materi",
+              "host": ["{{base_url}}"],
+              "path": ["materi"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mahasiswa - Absensi",
+      "item": [
+        {
+          "name": "Scan QR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kode_qr\": \"your-qr-code-here\",\n  \"latitude\": -6.200000,\n  \"longitude\": 106.816666\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/scan-qr",
+              "host": ["{{base_url}}"],
+              "path": ["scan-qr"]
+            }
+          }
+        },
+        {
+          "name": "Get Riwayat Absensi",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/riwayat-absensi",
+              "host": ["{{base_url}}"],
+              "path": ["riwayat-absensi"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mahasiswa - Tugas",
+      "item": [
+        {
+          "name": "Get Tugas Mahasiswa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tugas/mahasiswa/me",
+              "host": ["{{base_url}}"],
+              "path": ["tugas", "mahasiswa", "me"]
+            }
+          }
+        },
+        {
+          "name": "Upload Tugas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "tugas_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "file_jawaban",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload-tugas",
+              "host": ["{{base_url}}"],
+              "path": ["upload-tugas"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mahasiswa - Mata Kuliah",
+      "item": [
+        {
+          "name": "Get Mata Kuliah Mahasiswa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mata-kuliah/mahasiswa/me",
+              "host": ["{{base_url}}"],
+              "path": ["mata-kuliah", "mahasiswa", "me"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
