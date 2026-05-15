@@ -6,7 +6,9 @@ void main() async {
 
   // Test 1: Check if backend is reachable
   try {
-    final url = Uri.parse('http://10.0.2.2:8000/api/login');
+    // Use localhost for testing from command line
+    // Use 10.0.2.2 when running on Android emulator
+    final url = Uri.parse('http://localhost:8000/api/login');
     print('Testing URL: $url');
 
     final response = await http
