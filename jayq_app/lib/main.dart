@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 import 'routes/app_routes.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -36,19 +36,31 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
-      child: MaterialApp(
-        title: 'JAYQ',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        initialRoute: AppRoutes.splash,
-        routes: {
-          AppRoutes.splash: (context) => const SplashScreen(),
-          AppRoutes.login: (context) => const LoginScreen(),
-          AppRoutes.adminDashboard: (context) => const AdminDashboardScreen(),
-          AppRoutes.dosenDashboard: (context) => const DosenDashboardScreen(),
-          AppRoutes.mahasiswaDashboard: (context) =>
-              const MahasiswaDashboardScreen(),
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'JAYQ',
+            debugShowCheckedModeBanner: false,
+            theme: themeProvider.lightTheme,
+            darkTheme: themeProvider.darkTheme,
+            themeMode: themeProvider.isDarkMode
+                ? ThemeMode.dark
+                : ThemeMode.light,
+            initialRoute: AppRoutes.splash,
+            routes: {
+              AppRoutes.splash: (context) => const SplashScreen(),
+              AppRoutes.login: (context) => const LoginScreen(),
+              AppRoutes.adminDashboard: (context) => AdminDashboardScreen(),
+              AppRoutes.dosenDashboard: (context) =>
+                  const DosenDashboardScreen(),
+              AppRoutes.mahasiswaDashboard: (context) =>
+                  const MahasiswaDashboardScreen(),
+            },
+          );
         },
       ),
     );
