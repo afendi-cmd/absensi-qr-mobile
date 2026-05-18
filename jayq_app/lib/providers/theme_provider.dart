@@ -30,7 +30,6 @@ class ThemeProvider extends ChangeNotifier {
       primary: Color(0xFF2563EB),
       secondary: Color(0xFF1E40AF),
       surface: Color(0xFFF5F5F5),
-      background: Color(0xFFF5F5F5),
     ),
     scaffoldBackgroundColor: const Color(0xFFF5F5F5),
   );
@@ -42,7 +41,6 @@ class ThemeProvider extends ChangeNotifier {
       primary: Color(0xFF3B82F6),
       secondary: Color(0xFF2563EB),
       surface: Color(0xFF1F2937),
-      background: Color(0xFF111827),
     ),
     scaffoldBackgroundColor: const Color(0xFF111827),
   );

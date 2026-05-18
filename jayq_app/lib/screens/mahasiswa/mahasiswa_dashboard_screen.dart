@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/dashboard_provider.dart';
 import '../../widgets/common/stat_card.dart';
 
 class MahasiswaDashboardScreen extends StatefulWidget {
@@ -14,6 +15,24 @@ class MahasiswaDashboardScreen extends StatefulWidget {
 
 class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load data saat screen pertama kali dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final dashboardProvider = Provider.of<DashboardProvider>(
+        context,
+        listen: false,
+      );
+
+      if (authProvider.user != null) {
+        dashboardProvider.loadMahasiswaStats(authProvider.user!.id);
+        dashboardProvider.loadMahasiswaMataKuliah(authProvider.user!.id);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -188,66 +207,92 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
   }
 
   Widget _buildStatisticsGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.3,
-      children: [
-        StatCard(
-          title: 'Mata Kuliah',
-          value: '6',
-          icon: Icons.book,
-          color: AppColors.info,
-        ),
-        StatCard(
-          title: 'Kehadiran',
-          value: '85%',
-          icon: Icons.check_circle,
-          color: AppColors.success,
-        ),
-        StatCard(
-          title: 'Tugas Selesai',
-          value: '12/15',
-          icon: Icons.assignment_turned_in,
-          color: AppColors.mahasiswaColor,
-        ),
-        StatCard(
-          title: 'Tugas Pending',
-          value: '3',
-          icon: Icons.pending_actions,
-          color: AppColors.warning,
-        ),
-      ],
+    return Consumer<DashboardProvider>(
+      builder: (context, dashboardProvider, child) {
+        final stats = dashboardProvider.mahasiswaStats;
+        final isLoading = dashboardProvider.isLoadingMahasiswaStats;
+
+        if (isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 1.3,
+          children: [
+            StatCard(
+              title: 'Mata Kuliah',
+              value: '${stats?.totalMataKuliah ?? 0}',
+              icon: Icons.book,
+              color: AppColors.info,
+            ),
+            StatCard(
+              title: 'Kehadiran',
+              value: '${stats?.persentaseKehadiran.toStringAsFixed(0) ?? 0}%',
+              icon: Icons.check_circle,
+              color: AppColors.success,
+            ),
+            StatCard(
+              title: 'Tugas Selesai',
+              value:
+                  '${stats?.tugasSelesai ?? 0}/${(stats?.tugasSelesai ?? 0) + (stats?.tugasPending ?? 0)}',
+              icon: Icons.assignment_turned_in,
+              color: AppColors.mahasiswaColor,
+            ),
+            StatCard(
+              title: 'Tugas Pending',
+              value: '${stats?.tugasPending ?? 0}',
+              icon: Icons.pending_actions,
+              color: AppColors.warning,
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildMataKuliahList() {
-    return Column(
-      children: [
-        _buildMataKuliahCard(
-          kodeMk: 'IF101',
-          namaMk: 'Pemrograman Mobile',
-          dosen: 'Dr. Ahmad',
-          kehadiran: 90,
-        ),
-        const SizedBox(height: 12),
-        _buildMataKuliahCard(
-          kodeMk: 'IF102',
-          namaMk: 'Basis Data',
-          dosen: 'Dr. Budi',
-          kehadiran: 85,
-        ),
-        const SizedBox(height: 12),
-        _buildMataKuliahCard(
-          kodeMk: 'IF103',
-          namaMk: 'Algoritma & Struktur Data',
-          dosen: 'Dr. Citra',
-          kehadiran: 80,
-        ),
-      ],
+    return Consumer<DashboardProvider>(
+      builder: (context, dashboardProvider, child) {
+        final mataKuliahList = dashboardProvider.mataKuliahList;
+        final isLoading = dashboardProvider.isLoadingMataKuliah;
+
+        if (isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (mataKuliahList.isEmpty) {
+          return Card(
+            elevation: 2,
+            shadowColor: AppColors.shadow,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: Text('Belum ada mata kuliah terdaftar')),
+            ),
+          );
+        }
+
+        return Column(
+          children: mataKuliahList.map((mk) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildMataKuliahCard(
+                kodeMk: mk.kodeMk,
+                namaMk: mk.namaMk,
+                dosen: mk.dosenNama ?? 'Dosen',
+                kehadiran: 0, // TODO: Hitung dari data absensi
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 

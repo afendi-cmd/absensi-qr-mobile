@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
-import '../../routes/app_routes.dart';
+import '../../providers/dashboard_provider.dart';
 import 'manage_dosen_screen.dart';
 import 'manage_mahasiswa_screen.dart';
 import 'manage_matakuliah_screen.dart';
 import 'statistics_screen.dart';
 import 'admin_profile_screen.dart';
+import 'admin_schedule_screen.dart';
+import 'admin_history_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -20,37 +21,64 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // Load data saat screen pertama kali dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final dashboardProvider = Provider.of<DashboardProvider>(
+        context,
+        listen: false,
+      );
+      dashboardProvider.loadAdminStats();
+      dashboardProvider.loadAllUsers();
+      dashboardProvider.loadAllMataKuliah();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
+
+    // List of screens for bottom navigation
+    final List<Widget> screens = [
+      _buildDashboardContent(isDark),
+      const AdminScheduleScreen(),
+      const AdminHistoryScreen(),
+      const AdminProfileScreen(),
+    ];
 
     return Scaffold(
       backgroundColor: isDark
           ? const Color(0xFF111827)
           : const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(isDark),
-                const SizedBox(height: 20),
-                _buildStatisticsCards(isDark),
-                const SizedBox(height: 20),
-                _buildTrenPresensi(isDark),
-                const SizedBox(height: 20),
-                _buildAksiCepat(isDark),
-                const SizedBox(height: 16),
-                _buildPengumumanSistem(isDark),
-                const SizedBox(height: 80),
-              ],
-            ),
+      body: screens[_selectedIndex],
+      bottomNavigationBar: _buildBottomNav(isDark),
+    );
+  }
+
+  Widget _buildDashboardContent(bool isDark) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(isDark),
+              const SizedBox(height: 20),
+              _buildStatisticsCards(isDark),
+              const SizedBox(height: 20),
+              _buildTrenPresensi(isDark),
+              const SizedBox(height: 20),
+              _buildAksiCepat(isDark),
+              const SizedBox(height: 16),
+              _buildPengumumanSistem(isDark),
+              const SizedBox(height: 80),
+            ],
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(isDark),
     );
   }
 
@@ -103,195 +131,218 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildStatisticsCards(bool isDark) {
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1F2937) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'MATA KULIAH AKTIF',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? const Color(0xFF9CA3AF)
-                          : Colors.grey[600],
-                      letterSpacing: 0.5,
-                    ),
+    return Consumer<DashboardProvider>(
+      builder: (context, dashboardProvider, child) {
+        final stats = dashboardProvider.adminStats;
+        final isLoading = dashboardProvider.isLoadingAdminStats;
+
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1F2937) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '124',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? const Color(0xFF60A5FA)
-                          : const Color(0xFF1E3A8A),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'MATA KULIAH AKTIF',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : Colors.grey[600],
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      isLoading
+                          ? const CircularProgressIndicator()
+                          : Text(
+                              '${stats?.totalMataKuliah ?? 0}',
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? const Color(0xFF60A5FA)
+                                    : const Color(0xFF1E3A8A),
+                              ),
+                            ),
+                    ],
+                  ),
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2563EB),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.menu_book,
+                      color: Colors.white,
+                      size: 28,
                     ),
                   ),
                 ],
               ),
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2563EB),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.menu_book,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1F2937) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.2 : 0.04,
-                      ),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF312E81)
-                            : const Color(0xFFE0E7FF),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.school_outlined,
-                        color: isDark
-                            ? const Color(0xFF818CF8)
-                            : const Color(0xFF4F46E5),
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Total Dosen',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '86',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF111827),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1F2937) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.2 : 0.04,
-                      ),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1F2937) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.04,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF312E81)
+                                : const Color(0xFFE0E7FF),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.school_outlined,
+                            color: isDark
+                                ? const Color(0xFF818CF8)
+                                : const Color(0xFF4F46E5),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Total Dosen',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: isDark
+                                ? const Color(0xFF9CA3AF)
+                                : Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        isLoading
+                            ? const SizedBox(
+                                height: 24,
+                                child: CircularProgressIndicator(),
+                              )
+                            : Text(
+                                '${stats?.totalDosen ?? 0}',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF111827),
+                                ),
+                              ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF312E81)
-                            : const Color(0xFFE0E7FF),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.groups_outlined,
-                        color: isDark
-                            ? const Color(0xFF818CF8)
-                            : const Color(0xFF4F46E5),
-                        size: 24,
-                      ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1F2937) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.04,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Total Mahasiswa',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : Colors.grey[600],
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF312E81)
+                                : const Color(0xFFE0E7FF),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.groups_outlined,
+                            color: isDark
+                                ? const Color(0xFF818CF8)
+                                : const Color(0xFF4F46E5),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Total Mahasiswa',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: isDark
+                                ? const Color(0xFF9CA3AF)
+                                : Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        isLoading
+                            ? const SizedBox(
+                                height: 24,
+                                child: CircularProgressIndicator(),
+                              )
+                            : Text(
+                                '${stats?.totalMahasiswa ?? 0}',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF111827),
+                                ),
+                              ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '3.420',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF111827),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -655,7 +706,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 label: 'Profil',
                 isActive: _selectedIndex == 3,
                 isDark: isDark,
-                onTap: () => _handleProfileTap(),
+                onTap: () => setState(() => _selectedIndex = 3),
               ),
             ],
           ),
@@ -715,13 +766,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _handleProfileTap() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AdminProfileScreen()),
     );
   }
 }

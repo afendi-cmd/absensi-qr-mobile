@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\QrController;
 use App\Http\Controllers\Api\AbsensiController;
 use App\Http\Controllers\Api\TugasController;
 use App\Http\Controllers\Api\MateriController;
+use App\Http\Controllers\Api\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ========== ADMIN ROUTES ==========
     Route::middleware('role:admin')->group(function () {
+        // Dashboard Stats
+        Route::get('/admin/dashboard/stats', [DashboardController::class, 'adminStats']);
+
         // User Management
         Route::get('/users', [UserController::class, 'index']);
         Route::post('/users', [UserController::class, 'store']);
@@ -61,6 +65,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ========== DOSEN ROUTES ==========
     Route::middleware('role:dosen')->group(function () {
+        // Dashboard Stats
+        Route::get('/dosen/{id}/dashboard/stats', [DashboardController::class, 'dosenStats']);
+
         // Generate QR
         Route::post('/generate-qr', [QrController::class, 'generate']);
         Route::get('/qr-sessions', [QrController::class, 'index']);
@@ -91,6 +98,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ========== MAHASISWA ROUTES ==========
     Route::middleware('role:mahasiswa')->group(function () {
+        // Dashboard Stats
+        Route::get('/mahasiswa/{id}/stats', [DashboardController::class, 'mahasiswaStats']);
+
         // Scan QR Absensi
         Route::post('/scan-qr', [AbsensiController::class, 'scanQr']);
 

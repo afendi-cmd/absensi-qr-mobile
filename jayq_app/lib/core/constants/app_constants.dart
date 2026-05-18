@@ -5,7 +5,41 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // API Configuration
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  // ============================================================
+  // CARA MENGGANTI BASE URL:
+  // 1. Uncomment (hapus //) URL yang sesuai dengan device Anda
+  // 2. Comment (tambah //) URL yang lain
+  // 3. Hot restart app (tekan R di terminal)
+  // ============================================================
+
+  // 1. Untuk web browser (Chrome, Edge, dll)
+  //    Gunakan saat: flutter run -d chrome
+  // static const String baseUrl = "http://127.0.0.1:8000/api";
+
+  // 2. Untuk emulator Android (DEFAULT)
+  //    10.0.2.2 adalah alias untuk localhost dari emulator
+  //    Gunakan saat: flutter run (di emulator)
+  //static const String baseUrl = "http://10.0.2.2:8000/api";
+
+  // 3. Untuk HP fisik (ganti dengan IP komputer Anda)
+  //    Cara cek IP: buka CMD/Terminal, ketik "ipconfig" (Windows) atau "ifconfig" (Mac/Linux)
+  //    Pastikan HP dan komputer di WiFi yang sama
+  //    Backend harus jalan dengan: php artisan serve --host=0.0.0.0
+  static const String baseUrl =
+      "http://192.168.1.7:8000/api"; // Ganti dengan IP Anda
+
+  // 4. Untuk iOS Simulator
+  //    Gunakan saat: flutter run -d ios
+  // static const String baseUrl = "http://localhost:8000/api";
+
+  // ============================================================
+  // TROUBLESHOOTING:
+  // - Connection refused? Pastikan backend Laravel sudah jalan (php artisan serve)
+  // - Timeout? Cek network atau increase apiTimeout di bawah
+  // - 404 Not Found? Pastikan URL diakhiri dengan /api
+  // - HP tidak connect? Pastikan di WiFi yang sama & firewall allow port 8000
+  // ============================================================
+
   static const Duration apiTimeout = Duration(seconds: 30);
 
   // Storage Keys

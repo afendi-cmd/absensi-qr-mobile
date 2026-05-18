@@ -196,7 +196,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                   trailing: Switch(
                     value: themeProvider.isDarkMode,
                     onChanged: (value) => themeProvider.toggleTheme(),
-                    activeColor: const Color(0xFF2563EB),
+                    activeTrackColor: const Color(0xFF2563EB),
                   ),
                 ),
                 _buildDivider(isDark),
