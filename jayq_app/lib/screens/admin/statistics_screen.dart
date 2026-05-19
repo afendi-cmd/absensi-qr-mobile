@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import '../../providers/theme_provider.dart';
+import '../../data/services/absensi_service.dart';
+import '../../data/services/matakuliah_service.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -8,51 +13,186 @@ class StatisticsScreen extends StatefulWidget {
 }
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
+  final AbsensiService _absensiService = AbsensiService();
+  final MataKuliahService _mataKuliahService = MataKuliahService();
+
   String _selectedPeriod = 'Bulan Ini';
+  bool _isLoading = false;
+  String _errorMessage = '';
+
+  List<Map<String, dynamic>> _allAbsensi = [];
+  List<Map<String, dynamic>> _allMataKuliah = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      // Calculate date range based on selected period
+      final dateRange = _getDateRange(_selectedPeriod);
+
+      // Load data from API
+      final absensi = await _absensiService.getAllAbsensi(
+        tanggalMulai: dateRange['start'],
+        tanggalSelesai: dateRange['end'],
+      );
+
+      final mataKuliah = await _mataKuliahService.getMataKuliah();
+
+      setState(() {
+        _allAbsensi = absensi;
+        _allMataKuliah = mataKuliah;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Map<String, String> _getDateRange(String period) {
+    final now = DateTime.now();
+    DateTime start;
+    DateTime end = now;
+
+    switch (period) {
+      case 'Hari Ini':
+        start = DateTime(now.year, now.month, now.day);
+        break;
+      case 'Minggu Ini':
+        start = now.subtract(Duration(days: now.weekday - 1));
+        break;
+      case 'Bulan Ini':
+        start = DateTime(now.year, now.month, 1);
+        break;
+      case 'Semester Ini':
+        // Assume semester starts in January or July
+        final semesterStart = now.month <= 6 ? 1 : 7;
+        start = DateTime(now.year, semesterStart, 1);
+        break;
+      default:
+        start = DateTime(now.year, now.month, 1);
+    }
+
+    return {
+      'start': DateFormat('yyyy-MM-dd').format(start),
+      'end': DateFormat('yyyy-MM-dd').format(end),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1F2937)),
+          icon: Icon(
+            Icons.arrow_back_rounded,
+            color: isDark ? Colors.white : const Color(0xFF1F2937),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Statistik & Laporan',
+        title: Text(
+          'Laporan Presensi',
           style: TextStyle(
-            color: Color(0xFF1F2937),
+            color: isDark ? Colors.white : const Color(0xFF1F2937),
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download_rounded, color: Color(0xFF6B7280)),
-            onPressed: () => _showExportDialog(),
+            icon: Icon(
+              Icons.refresh,
+              color: isDark ? Colors.white : const Color(0xFF1F2937),
+            ),
+            onPressed: _loadData,
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.download_rounded,
+              color: isDark ? Colors.white : const Color(0xFF6B7280),
+            ),
+            onPressed: () => _showExportDialog(isDark),
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage.isNotEmpty
+          ? _buildErrorState(isDark)
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPeriodSelector(isDark),
+                  _buildOverviewCards(isDark),
+                  _buildMataKuliahList(isDark),
+                  _buildRecentActivities(isDark),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildErrorState(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildPeriodSelector(),
-            _buildOverviewCards(),
-            _buildAttendanceChart(),
-            _buildTopPerformers(),
-            _buildRecentActivities(),
-            const SizedBox(height: 20),
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage,
+              style: TextStyle(
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF6B7280),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+              ),
+              child: const Text(
+                'Coba Lagi',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPeriodSelector() {
+  Widget _buildPeriodSelector(bool isDark) {
     final periods = ['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Semester Ini'];
 
     return Container(
@@ -73,13 +213,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               selected: isSelected,
               onSelected: (selected) {
                 setState(() => _selectedPeriod = period);
+                _loadData();
               },
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
               selectedColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
               labelStyle: TextStyle(
                 color: isSelected
                     ? const Color(0xFF2563EB)
-                    : const Color(0xFF6B7280),
+                    : (isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF6B7280)),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 fontSize: 13,
               ),
@@ -88,7 +231,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 side: BorderSide(
                   color: isSelected
                       ? const Color(0xFF2563EB)
-                      : const Color(0xFFE5E7EB),
+                      : (isDark
+                            ? const Color(0xFF374151)
+                            : const Color(0xFFE5E7EB)),
                 ),
               ),
             ),
@@ -98,18 +243,25 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Widget _buildOverviewCards() {
+  Widget _buildOverviewCards(bool isDark) {
+    final totalAbsensi = _allAbsensi.length;
+    final totalHadir = _allAbsensi.where((a) => a['status'] == 'hadir').length;
+    final totalMataKuliah = _allMataKuliah.length;
+    final persentaseKehadiran = totalAbsensi > 0
+        ? (totalHadir / totalAbsensi * 100).toStringAsFixed(1)
+        : '0.0';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Overview',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
+              color: isDark ? Colors.white : const Color(0xFF1F2937),
             ),
           ),
           const SizedBox(height: 16),
@@ -119,39 +271,35 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 1.4,
+            childAspectRatio: 1.9,
             children: [
               _buildStatCard(
                 'Total Kehadiran',
-                '2.847',
-                '+12.5%',
+                '$totalHadir',
                 Icons.check_circle_rounded,
                 const Color(0xFF10B981),
-                true,
+                isDark,
               ),
               _buildStatCard(
-                'Rata-rata Kehadiran',
-                '87.3%',
-                '+3.2%',
+                'Persentase',
+                '$persentaseKehadiran%',
                 Icons.trending_up_rounded,
                 const Color(0xFF2563EB),
-                true,
+                isDark,
               ),
               _buildStatCard(
-                'Tugas Terkumpul',
-                '1.234',
-                '-2.1%',
+                'Total Absensi',
+                '$totalAbsensi',
                 Icons.assignment_turned_in_rounded,
                 const Color(0xFF8B5CF6),
-                false,
+                isDark,
               ),
               _buildStatCard(
-                'Mata Kuliah Aktif',
-                '124',
-                '+5',
+                'Mata Kuliah',
+                '$totalMataKuliah',
                 Icons.book_rounded,
                 const Color(0xFFF59E0B),
-                true,
+                isDark,
               ),
             ],
           ),
@@ -163,269 +311,59 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Widget _buildStatCard(
     String label,
     String value,
-    String change,
     IconData icon,
     Color color,
-    bool isPositive,
+    bool isDark,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
         ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color:
-                      (isPositive
-                              ? const Color(0xFF10B981)
-                              : const Color(0xFFEF4444))
-                          .withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  change,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isPositive
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFEF4444),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAttendanceChart() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Tren Kehadiran',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
-                ),
-              ),
-              TextButton(onPressed: () {}, child: const Text('Lihat Detail')),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // Placeholder for chart
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.bar_chart_rounded,
-                    size: 48,
-                    color: Color(0xFF9CA3AF),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Grafik akan ditampilkan di sini',
-                    style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopPerformers() {
-    final topPerformers = [
-      {'nama': 'Fitri Handayani', 'ipk': 3.90, 'kehadiran': 98},
-      {'nama': 'Dewi Lestari', 'ipk': 3.82, 'kehadiran': 96},
-      {'nama': 'Ahmad Fauzi', 'ipk': 3.75, 'kehadiran': 95},
-    ];
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Top Performers',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...topPerformers.asMap().entries.map((entry) {
-            final index = entry.key;
-            final performer = entry.value;
-            return _buildPerformerItem(
-              index + 1,
-              performer['nama'] as String,
-              performer['ipk'] as double,
-              performer['kehadiran'] as int,
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPerformerItem(int rank, String nama, double ipk, int kehadiran) {
-    final rankColors = [
-      const Color(0xFFFCD34D), // Gold
-      const Color(0xFFC0C0C0), // Silver
-      const Color(0xFFCD7F32), // Bronze
-    ];
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: rankColors[rank - 1].withValues(alpha: 0.2),
-              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Center(
-              child: Text(
-                '$rank',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: rankColors[rank - 1],
-                ),
-              ),
-            ),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  nama,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1F2937),
+                  value,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF1F2937),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.star_rounded,
-                      size: 14,
-                      color: const Color(0xFFF59E0B),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'IPK $ipk',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Icon(
-                      Icons.check_circle_rounded,
-                      size: 14,
-                      color: const Color(0xFF10B981),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$kehadiran%',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF9CA3AF),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -435,37 +373,39 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Widget _buildRecentActivities() {
-    final activities = [
-      {
-        'icon': Icons.person_add_rounded,
-        'title': '5 Mahasiswa baru ditambahkan',
-        'time': '2 jam yang lalu',
-        'color': const Color(0xFF10B981),
-      },
-      {
-        'icon': Icons.book_rounded,
-        'title': 'Mata kuliah "AI" dibuat',
-        'time': '5 jam yang lalu',
-        'color': const Color(0xFF2563EB),
-      },
-      {
-        'icon': Icons.check_circle_rounded,
-        'title': 'Absensi selesai - Pemrograman Mobile',
-        'time': '1 hari yang lalu',
-        'color': const Color(0xFF8B5CF6),
-      },
-    ];
+  Widget _buildMataKuliahList(bool isDark) {
+    if (_allMataKuliah.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Group absensi by mata kuliah
+    final mataKuliahStats = <int, Map<String, dynamic>>{};
+    for (final mk in _allMataKuliah) {
+      final mkId = mk['id'];
+      final absensiMk = _allAbsensi.where((a) => a['mata_kuliah_id'] == mkId);
+      final totalAbsensi = absensiMk.length;
+      final totalHadir = absensiMk.where((a) => a['status'] == 'hadir').length;
+
+      mataKuliahStats[mkId] = {
+        'nama_mk': mk['nama_mk'],
+        'kode_mk': mk['kode_mk'],
+        'total_absensi': totalAbsensi,
+        'total_hadir': totalHadir,
+        'persentase': totalAbsensi > 0
+            ? (totalHadir / totalAbsensi * 100).toStringAsFixed(1)
+            : '0.0',
+      };
+    }
 
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
@@ -474,16 +414,185 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
+            'Statistik per Mata Kuliah',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : const Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...mataKuliahStats.entries.map((entry) {
+            final stats = entry.value;
+            return _buildMataKuliahItem(
+              stats['nama_mk'],
+              stats['kode_mk'],
+              stats['total_hadir'],
+              stats['total_absensi'],
+              stats['persentase'],
+              isDark,
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMataKuliahItem(
+    String namaMk,
+    String kodeMk,
+    int totalHadir,
+    int totalAbsensi,
+    String persentase,
+    bool isDark,
+  ) {
+    final persentaseValue = double.tryParse(persentase) ?? 0.0;
+    final color = persentaseValue >= 80
+        ? const Color(0xFF10B981)
+        : persentaseValue >= 60
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFFEF4444);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111827) : const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      namaMk,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : const Color(0xFF1F2937),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      kodeMk,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$persentase%',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                size: 16,
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF6B7280),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '$totalHadir hadir dari $totalAbsensi pertemuan',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: persentaseValue / 100,
+              backgroundColor: isDark
+                  ? const Color(0xFF374151)
+                  : const Color(0xFFE5E7EB),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentActivities(bool isDark) {
+    // Get recent 5 absensi
+    final recentAbsensi = _allAbsensi.take(5).toList();
+
+    if (recentAbsensi.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
             'Aktivitas Terbaru',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
+              color: isDark ? Colors.white : const Color(0xFF1F2937),
             ),
           ),
           const SizedBox(height: 16),
-          ...activities.map((activity) {
+          ...recentAbsensi.map((absensi) {
+            final status = absensi['status'] ?? 'unknown';
+            final color = status == 'hadir'
+                ? const Color(0xFF10B981)
+                : status == 'izin'
+                ? const Color(0xFFF59E0B)
+                : const Color(0xFFEF4444);
+
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               child: Row(
@@ -491,14 +600,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: (activity['color'] as Color).withValues(
-                        alpha: 0.1,
-                      ),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      activity['icon'] as IconData,
-                      color: activity['color'] as Color,
+                      status == 'hadir'
+                          ? Icons.check_circle_rounded
+                          : status == 'izin'
+                          ? Icons.info_rounded
+                          : Icons.cancel_rounded,
+                      color: color,
                       size: 20,
                     ),
                   ),
@@ -508,19 +619,23 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          activity['title'] as String,
-                          style: const TextStyle(
+                          'Absensi ${status.toUpperCase()}',
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF1F2937),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1F2937),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          activity['time'] as String,
-                          style: const TextStyle(
+                          absensi['tanggal'] ?? '-',
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF9CA3AF),
+                            color: isDark
+                                ? const Color(0xFF9CA3AF)
+                                : const Color(0xFF9CA3AF),
                           ),
                         ),
                       ],
@@ -535,29 +650,60 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  void _showExportDialog() {
+  void _showExportDialog(bool isDark) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Export Laporan'),
+        title: Text(
+          'Export Laporan',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF1F2937),
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.picture_as_pdf_rounded),
-              title: const Text('Export ke PDF'),
-              onTap: () => Navigator.pop(context),
+              leading: const Icon(
+                Icons.picture_as_pdf_rounded,
+                color: Color(0xFFEF4444),
+              ),
+              title: Text(
+                'Export ke PDF',
+                style: TextStyle(
+                  color: isDark ? Colors.white : const Color(0xFF1F2937),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Fitur export PDF akan segera hadir'),
+                  ),
+                );
+              },
             ),
             ListTile(
-              leading: const Icon(Icons.table_chart_rounded),
-              title: const Text('Export ke Excel'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.image_rounded),
-              title: const Text('Export ke Image'),
-              onTap: () => Navigator.pop(context),
+              leading: const Icon(
+                Icons.table_chart_rounded,
+                color: Color(0xFF10B981),
+              ),
+              title: Text(
+                'Export ke Excel',
+                style: TextStyle(
+                  color: isDark ? Colors.white : const Color(0xFF1F2937),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Fitur export Excel akan segera hadir'),
+                  ),
+                );
+              },
             ),
           ],
         ),
