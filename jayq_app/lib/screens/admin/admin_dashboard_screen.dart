@@ -5,6 +5,7 @@ import '../../providers/dashboard_provider.dart';
 import 'manage_dosen_screen.dart';
 import 'manage_mahasiswa_screen.dart';
 import 'manage_matakuliah_screen.dart';
+import 'manage_peserta_screen.dart';
 import 'statistics_screen.dart';
 import 'admin_profile_screen.dart';
 import 'admin_schedule_screen.dart';
@@ -510,6 +511,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
         const SizedBox(height: 16),
+        // First row - 3 buttons
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -548,6 +550,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const ManageMataKuliahScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Second row - 2 buttons centered
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildAksiCepatButton(
+              icon: Icons.groups,
+              label: 'Kelola\nPeserta',
+              isDark: isDark,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ManagePesertaScreen(),
                   ),
                 );
               },

@@ -54,4 +54,13 @@ class UserModel {
   bool get isAdmin => role.toLowerCase() == 'admin';
   bool get isDosen => role.toLowerCase() == 'dosen';
   bool get isMahasiswa => role.toLowerCase() == 'mahasiswa';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is UserModel && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
