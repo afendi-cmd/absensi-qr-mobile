@@ -14,6 +14,8 @@ class MataKuliah extends Model
     protected $fillable = [
         'nama_mk',
         'kode_mk',
+        'sks',
+        'semester',
         'dosen_id',
     ];
 

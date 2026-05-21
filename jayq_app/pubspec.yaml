@@ -78,6 +78,6 @@ flutter_launcher_icons:
   image_path: "assets/logo/image.png"
   adaptive_icon_background: "#F8F9FB"
   adaptive_icon_foreground: "assets/logo/image.png"
-  adaptive_icon_padding: 20 # Tingkatkan padding agar icon tidak terpotong
+  adaptive_icon_padding: 1000 # Tingkatkan padding agar icon tidak terpotong
   min_sdk_android: 21
   remove_alpha_ios: true

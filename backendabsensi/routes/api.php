@@ -54,13 +54,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/mata-kuliah/{id}', [MataKuliahController::class, 'update']);
         Route::delete('/mata-kuliah/{id}', [MataKuliahController::class, 'destroy']);
 
-        // Peserta Mata Kuliah Management
+        // View all absensi
+        Route::get('/absensi/all', [AbsensiController::class, 'getAllAbsensi']);
+    });
+
+    // ========== ADMIN & DOSEN SHARED ROUTES ==========
+    Route::middleware('role:admin,dosen')->group(function () {
+        // Peserta Mata Kuliah Management (accessible by both admin and dosen)
         Route::post('/peserta-mk', [PesertaMkController::class, 'store']);
         Route::delete('/peserta-mk/{id}', [PesertaMkController::class, 'destroy']);
         Route::get('/mata-kuliah/{id}/peserta', [PesertaMkController::class, 'getPesertaByMataKuliah']);
-
-        // View all absensi
-        Route::get('/absensi/all', [AbsensiController::class, 'getAllAbsensi']);
     });
 
     // ========== DOSEN ROUTES ==========
@@ -93,7 +96,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Lihat mata kuliah yang diajar
         Route::get('/mata-kuliah/dosen/me', [MataKuliahController::class, 'getMataKuliahDosen']);
-        Route::get('/mata-kuliah/{id}/peserta', [PesertaMkController::class, 'getPesertaByMataKuliah']);
     });
 
     // ========== MAHASISWA ROUTES ==========

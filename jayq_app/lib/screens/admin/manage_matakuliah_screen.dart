@@ -72,6 +72,8 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
   void _showAddDialog(bool isDark) {
     final namaMkController = TextEditingController();
     final kodeMkController = TextEditingController();
+    final sksController = TextEditingController();
+    final semesterController = TextEditingController();
     int? selectedDosenId;
     final formKey = GlobalKey<FormState>();
 
@@ -154,6 +156,80 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  TextFormField(
+                    controller: sksController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF1F2937),
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'SKS',
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF6B7280),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFE5E7EB),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'SKS tidak boleh kosong';
+                      }
+                      final sks = int.tryParse(value);
+                      if (sks == null || sks < 1 || sks > 6) {
+                        return 'SKS harus antara 1-6';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: semesterController,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF1F2937),
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Semester',
+                      hintText: 'Contoh: Ganjil 2024/2025',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? const Color(0xFF6B7280)
+                            : const Color(0xFF9CA3AF),
+                      ),
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF6B7280),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFE5E7EB),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Semester tidak boleh kosong';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
                     value: selectedDosenId,
                     dropdownColor: isDark
@@ -222,6 +298,8 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
                     await _mataKuliahService.createMataKuliah({
                       'nama_mk': namaMkController.text,
                       'kode_mk': kodeMkController.text,
+                      'sks': int.parse(sksController.text),
+                      'semester': semesterController.text,
                       'dosen_id': selectedDosenId,
                     });
                     if (mounted) {
@@ -262,6 +340,12 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
   void _showEditDialog(Map<String, dynamic> mataKuliah, bool isDark) {
     final namaMkController = TextEditingController(text: mataKuliah['nama_mk']);
     final kodeMkController = TextEditingController(text: mataKuliah['kode_mk']);
+    final sksController = TextEditingController(
+      text: mataKuliah['sks']?.toString() ?? '',
+    );
+    final semesterController = TextEditingController(
+      text: mataKuliah['semester'] ?? '',
+    );
     int? selectedDosenId = mataKuliah['dosen_id'];
     final formKey = GlobalKey<FormState>();
 
@@ -344,6 +428,80 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  TextFormField(
+                    controller: sksController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF1F2937),
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'SKS',
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF6B7280),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFE5E7EB),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'SKS tidak boleh kosong';
+                      }
+                      final sks = int.tryParse(value);
+                      if (sks == null || sks < 1 || sks > 6) {
+                        return 'SKS harus antara 1-6';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: semesterController,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF1F2937),
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Semester',
+                      hintText: 'Contoh: Ganjil 2024/2025',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? const Color(0xFF6B7280)
+                            : const Color(0xFF9CA3AF),
+                      ),
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF6B7280),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFE5E7EB),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Semester tidak boleh kosong';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
                     value: selectedDosenId,
                     dropdownColor: isDark
@@ -413,6 +571,8 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
                         .updateMataKuliah(mataKuliah['id'], {
                           'nama_mk': namaMkController.text,
                           'kode_mk': kodeMkController.text,
+                          'sks': int.parse(sksController.text),
+                          'semester': semesterController.text,
                           'dosen_id': selectedDosenId,
                         });
                     if (mounted) {
@@ -542,6 +702,12 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
             _buildDetailRow('ID', mataKuliah['id'].toString(), isDark),
             _buildDetailRow('Nama', mataKuliah['nama_mk'] ?? '-', isDark),
             _buildDetailRow('Kode', mataKuliah['kode_mk'] ?? '-', isDark),
+            _buildDetailRow(
+              'SKS',
+              mataKuliah['sks']?.toString() ?? '-',
+              isDark,
+            ),
+            _buildDetailRow('Semester', mataKuliah['semester'] ?? '-', isDark),
             _buildDetailRow('Dosen', dosen['nama'] ?? '-', isDark),
           ],
         ),
@@ -790,6 +956,16 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
                                     Text(
                                       'Kode: ${mataKuliah['kode_mk'] ?? '-'}',
                                       style: TextStyle(
+                                        color: isDark
+                                            ? const Color(0xFF9CA3AF)
+                                            : const Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'SKS: ${mataKuliah['sks'] ?? '-'} • Semester: ${mataKuliah['semester'] ?? '-'}',
+                                      style: TextStyle(
+                                        fontSize: 12,
                                         color: isDark
                                             ? const Color(0xFF9CA3AF)
                                             : const Color(0xFF6B7280),

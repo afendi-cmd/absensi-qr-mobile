@@ -28,16 +28,25 @@ class ApiService {
       final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
       final headers = await _getHeaders(requiresAuth: requiresAuth);
 
+      print('🌐 GET Request to: $url');
+      print('📤 Headers: $headers');
+
       final response = await http
           .get(url, headers: headers)
           .timeout(AppConstants.apiTimeout);
 
+      print('📥 Response Status: ${response.statusCode}');
+      print('📥 Response Body: ${response.body}');
+
       return _handleResponse(response);
     } on SocketException {
+      print('❌ SocketException: No internet connection');
       throw Exception('No internet connection');
     } on HttpException {
+      print('❌ HttpException: Service unavailable');
       throw Exception('Service unavailable');
     } catch (e) {
+      print('❌ Error: $e');
       throw Exception('Error: $e');
     }
   }

@@ -51,12 +51,33 @@ class PesertaMkController extends Controller
         }
 
         $peserta = PesertaMk::create($request->all());
-        $peserta->load(['mahasiswa:id,nama,email', 'mataKuliah:id,nama_mk,kode_mk']);
+        $peserta->load('mahasiswa:id,nama,email,role', 'mataKuliah:id,nama_mk,kode_mk');
+
+        // Format response
+        $response = [
+            'id' => $peserta->id,
+            'mahasiswa_id' => $peserta->mahasiswa_id,
+            'mata_kuliah_id' => $peserta->mata_kuliah_id,
+            'created_at' => $peserta->created_at,
+            'updated_at' => $peserta->updated_at,
+            'mahasiswa' => $peserta->mahasiswa ? [
+                'id' => $peserta->mahasiswa->id,
+                'name' => $peserta->mahasiswa->nama,
+                'nama' => $peserta->mahasiswa->nama,
+                'email' => $peserta->mahasiswa->email,
+                'role' => $peserta->mahasiswa->role,
+            ] : null,
+            'mata_kuliah' => $peserta->mataKuliah ? [
+                'id' => $peserta->mataKuliah->id,
+                'nama_mk' => $peserta->mataKuliah->nama_mk,
+                'kode_mk' => $peserta->mataKuliah->kode_mk,
+            ] : null,
+        ];
 
         return response()->json([
             'success' => true,
             'message' => 'Mahasiswa berhasil ditambahkan ke mata kuliah',
-            'data' => $peserta
+            'data' => $response
         ], 201);
     }
 
@@ -97,14 +118,37 @@ class PesertaMkController extends Controller
         }
 
         $peserta = PesertaMk::where('mata_kuliah_id', $id)
-            ->with('mahasiswa:id,nama,email')
-            ->get();
+            ->with('mahasiswa:id,nama,email,role')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'mahasiswa_id' => $item->mahasiswa_id,
+                    'mata_kuliah_id' => $item->mata_kuliah_id,
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                    'mahasiswa' => $item->mahasiswa ? [
+                        'id' => $item->mahasiswa->id,
+                        'name' => $item->mahasiswa->nama,
+                        'nama' => $item->mahasiswa->nama,
+                        'email' => $item->mahasiswa->email,
+                        'role' => $item->mahasiswa->role,
+                    ] : null,
+                ];
+            });
 
         return response()->json([
             'success' => true,
             'message' => 'Data peserta berhasil diambil',
             'data' => [
-                'mata_kuliah' => $mataKuliah,
+                'mata_kuliah' => [
+                    'id' => $mataKuliah->id,
+                    'kode_mk' => $mataKuliah->kode_mk,
+                    'nama_mk' => $mataKuliah->nama_mk,
+                    'sks' => $mataKuliah->sks,
+                    'semester' => $mataKuliah->semester,
+                    'dosen_id' => $mataKuliah->dosen_id,
+                ],
                 'peserta' => $peserta
             ]
         ], 200);

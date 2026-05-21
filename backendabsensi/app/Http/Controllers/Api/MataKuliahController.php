@@ -31,6 +31,8 @@ class MataKuliahController extends Controller
         $validator = Validator::make($request->all(), [
             'nama_mk' => 'required|string|max:100',
             'kode_mk' => 'required|string|max:20|unique:mata_kuliah,kode_mk',
+            'sks' => 'required|integer|min:1|max:6',
+            'semester' => 'required|string|max:50',
             'dosen_id' => 'required|exists:users,id',
         ]);
 
@@ -99,6 +101,8 @@ class MataKuliahController extends Controller
         $validator = Validator::make($request->all(), [
             'nama_mk' => 'sometimes|required|string|max:100',
             'kode_mk' => 'sometimes|required|string|max:20|unique:mata_kuliah,kode_mk,' . $id,
+            'sks' => 'sometimes|required|integer|min:1|max:6',
+            'semester' => 'sometimes|required|string|max:50',
             'dosen_id' => 'sometimes|required|exists:users,id',
         ]);
 

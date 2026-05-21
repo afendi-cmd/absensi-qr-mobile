@@ -98,7 +98,7 @@ class _ManagePesertaScreenState extends State<ManagePesertaScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -118,9 +118,36 @@ class _ManagePesertaScreenState extends State<ManagePesertaScreen> {
           const SizedBox(height: 12),
           if (provider.isLoadingMataKuliah)
             const Center(child: CircularProgressIndicator())
+          else if (provider.mataKuliahList.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF374151)
+                    : const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF374151)
+                      : const Color(0xFFE5E7EB),
+                ),
+              ),
+              child: Text(
+                'Tidak ada mata kuliah tersedia',
+                style: TextStyle(
+                  color: isDark ? const Color(0xFF9CA3AF) : Colors.grey[600],
+                ),
+              ),
+            )
           else
             DropdownButtonFormField<MataKuliahModel>(
-              value: provider.selectedMataKuliah,
+              value:
+                  provider.selectedMataKuliah != null &&
+                      provider.mataKuliahList.contains(
+                        provider.selectedMataKuliah,
+                      )
+                  ? provider.selectedMataKuliah
+                  : null,
               decoration: InputDecoration(
                 hintText: 'Pilih mata kuliah...',
                 hintStyle: TextStyle(
@@ -150,37 +177,29 @@ class _ManagePesertaScreenState extends State<ManagePesertaScreen> {
                 fillColor: isDark
                     ? const Color(0xFF374151)
                     : const Color(0xFFF9FAFB),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
+                isDense: true,
               ),
               dropdownColor: isDark ? const Color(0xFF374151) : Colors.white,
               style: TextStyle(
                 color: isDark ? Colors.white : const Color(0xFF111827),
+                fontSize: 14,
               ),
+              isExpanded: true,
               items: provider.mataKuliahList.map((mataKuliah) {
                 return DropdownMenuItem<MataKuliahModel>(
                   value: mataKuliah,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        mataKuliah.namaMk,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF111827),
-                        ),
-                      ),
-                      Text(
-                        '${mataKuliah.kodeMk} • ${mataKuliah.sks} SKS',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark
-                              ? const Color(0xFF9CA3AF)
-                              : Colors.grey[600],
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    '${mataKuliah.namaMk} (${mataKuliah.kodeMk} • ${mataKuliah.sks} SKS)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white : const Color(0xFF111827),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 );
               }).toList(),
@@ -294,7 +313,7 @@ class _ManagePesertaScreenState extends State<ManagePesertaScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -334,7 +353,7 @@ class _ManagePesertaScreenState extends State<ManagePesertaScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withOpacity(0.1),
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -376,7 +395,7 @@ class _ManagePesertaScreenState extends State<ManagePesertaScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -388,7 +407,7 @@ class _ManagePesertaScreenState extends State<ManagePesertaScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: const Color(0xFF2563EB).withOpacity(0.1),
+            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(Icons.person, color: Color(0xFF2563EB), size: 24),
@@ -579,6 +598,8 @@ class _AddPesertaDialogState extends State<_AddPesertaDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final availableMahasiswa = widget.provider.availableMahasiswa;
+
     return AlertDialog(
       backgroundColor: widget.isDark ? const Color(0xFF1F2937) : Colors.white,
       title: Text(
@@ -602,88 +623,109 @@ class _AddPesertaDialogState extends State<_AddPesertaDialog> {
               ),
             ),
             const SizedBox(height: 8),
-            DropdownButtonFormField<UserModel>(
-              value: selectedMahasiswa,
-              decoration: InputDecoration(
-                hintText: 'Pilih mahasiswa...',
-                hintStyle: TextStyle(
-                  color: widget.isDark
-                      ? const Color(0xFF9CA3AF)
-                      : Colors.grey[600],
-                ),
-                border: OutlineInputBorder(
+            if (availableMahasiswa.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: widget.isDark
-                        ? const Color(0xFF374151)
-                        : const Color(0xFFE5E7EB),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.3),
                   ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: widget.isDark
-                        ? const Color(0xFF374151)
-                        : const Color(0xFFE5E7EB),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF2563EB)),
-                ),
-                filled: true,
-                fillColor: widget.isDark
-                    ? const Color(0xFF374151)
-                    : const Color(0xFFF9FAFB),
-              ),
-              dropdownColor: widget.isDark
-                  ? const Color(0xFF374151)
-                  : Colors.white,
-              style: TextStyle(
-                color: widget.isDark ? Colors.white : const Color(0xFF111827),
-              ),
-              items: widget.provider.availableMahasiswa.map((mahasiswa) {
-                return DropdownMenuItem<UserModel>(
-                  value: mahasiswa,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        mahasiswa.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: widget.isDark
-                              ? Colors.white
-                              : const Color(0xFF111827),
-                        ),
-                      ),
-                      Text(
-                        mahasiswa.email,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.orange[700],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Semua mahasiswa sudah terdaftar di mata kuliah ini',
                         style: TextStyle(
                           fontSize: 12,
-                          color: widget.isDark
-                              ? const Color(0xFF9CA3AF)
-                              : Colors.grey[600],
+                          color: Colors.orange[700],
                         ),
                       ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (mahasiswa) {
-                setState(() {
-                  selectedMahasiswa = mahasiswa;
-                });
-              },
-            ),
-            if (widget.provider.availableMahasiswa.isEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Semua mahasiswa sudah terdaftar di mata kuliah ini',
-                  style: TextStyle(fontSize: 12, color: Colors.orange[600]),
+                    ),
+                  ],
                 ),
+              )
+            else
+              DropdownButtonFormField<UserModel>(
+                value:
+                    selectedMahasiswa != null &&
+                        availableMahasiswa.contains(selectedMahasiswa)
+                    ? selectedMahasiswa
+                    : null,
+                decoration: InputDecoration(
+                  hintText: 'Pilih mahasiswa...',
+                  hintStyle: TextStyle(
+                    color: widget.isDark
+                        ? const Color(0xFF9CA3AF)
+                        : Colors.grey[600],
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: widget.isDark
+                          ? const Color(0xFF374151)
+                          : const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: widget.isDark
+                          ? const Color(0xFF374151)
+                          : const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF2563EB)),
+                  ),
+                  filled: true,
+                  fillColor: widget.isDark
+                      ? const Color(0xFF374151)
+                      : const Color(0xFFF9FAFB),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  isDense: true,
+                ),
+                dropdownColor: widget.isDark
+                    ? const Color(0xFF374151)
+                    : Colors.white,
+                style: TextStyle(
+                  color: widget.isDark ? Colors.white : const Color(0xFF111827),
+                  fontSize: 14,
+                ),
+                isExpanded: true,
+                items: availableMahasiswa.map((mahasiswa) {
+                  return DropdownMenuItem<UserModel>(
+                    value: mahasiswa,
+                    child: Text(
+                      '${mahasiswa.name} (${mahasiswa.email})',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: widget.isDark
+                            ? Colors.white
+                            : const Color(0xFF111827),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (mahasiswa) {
+                  setState(() {
+                    selectedMahasiswa = mahasiswa;
+                  });
+                },
               ),
           ],
         ),
@@ -699,7 +741,10 @@ class _AddPesertaDialogState extends State<_AddPesertaDialog> {
           ),
         ),
         ElevatedButton(
-          onPressed: (isLoading || selectedMahasiswa == null)
+          onPressed:
+              (isLoading ||
+                  selectedMahasiswa == null ||
+                  availableMahasiswa.isEmpty)
               ? null
               : () async {
                   setState(() {
