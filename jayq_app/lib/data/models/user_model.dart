@@ -5,8 +5,11 @@ class UserModel {
   final String role;
   final String? nip;
   final String? nim;
+  final String? nidn;
   final String? photoUrl;
   final String? phone;
+  final String? noHp;
+  final String? alamat;
   final DateTime? createdAt;
 
   UserModel({
@@ -16,8 +19,11 @@ class UserModel {
     required this.role,
     this.nip,
     this.nim,
+    this.nidn,
     this.photoUrl,
     this.phone,
+    this.noHp,
+    this.alamat,
     this.createdAt,
   });
 
@@ -29,8 +35,11 @@ class UserModel {
       role: json['role'] ?? '',
       nip: json['nip'],
       nim: json['nim'],
+      nidn: json['nidn'],
       photoUrl: json['photo_url'],
       phone: json['phone'],
+      noHp: json['no_hp'],
+      alamat: json['alamat'],
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : null,
@@ -45,8 +54,11 @@ class UserModel {
       'role': role,
       'nip': nip,
       'nim': nim,
+      'nidn': nidn,
       'photo_url': photoUrl,
       'phone': phone,
+      'no_hp': noHp,
+      'alamat': alamat,
       'created_at': createdAt?.toIso8601String(),
     };
   }

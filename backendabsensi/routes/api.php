@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\AbsensiController;
 use App\Http\Controllers\Api\TugasController;
 use App\Http\Controllers\Api\MateriController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\PengumumanController;
+use App\Http\Controllers\Api\ExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin')->group(function () {
         // Dashboard Stats
         Route::get('/admin/dashboard/stats', [DashboardController::class, 'adminStats']);
+        Route::get('/admin/dashboard/advanced-stats', [DashboardController::class, 'advancedStats']);
 
         // User Management
         Route::get('/users', [UserController::class, 'index']);
@@ -46,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users/{id}', [UserController::class, 'show']);
         Route::put('/users/{id}', [UserController::class, 'update']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        Route::post('/users/{id}/reset-password', [UserController::class, 'resetPassword']);
 
         // Mata Kuliah Management
         Route::get('/mata-kuliah', [MataKuliahController::class, 'index']);
@@ -56,6 +60,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // View all absensi
         Route::get('/absensi/all', [AbsensiController::class, 'getAllAbsensi']);
+
+        // Pengumuman Management
+        Route::get('/pengumuman/admin', [PengumumanController::class, 'adminIndex']);
+        Route::post('/pengumuman', [PengumumanController::class, 'store']);
+        Route::put('/pengumuman/{id}', [PengumumanController::class, 'update']);
+        Route::delete('/pengumuman/{id}', [PengumumanController::class, 'destroy']);
+        Route::post('/pengumuman/{id}/toggle-active', [PengumumanController::class, 'toggleActive']);
+
+        // Export Data
+        Route::get('/export/absensi', [ExportController::class, 'exportAbsensi']);
+        Route::get('/export/rekap-mahasiswa', [ExportController::class, 'exportRekapMahasiswa']);
+        Route::get('/export/mahasiswa', [ExportController::class, 'exportMahasiswa']);
+        Route::get('/export/dosen', [ExportController::class, 'exportDosen']);
+        Route::get('/export/mata-kuliah', [ExportController::class, 'exportMataKuliah']);
     });
 
     // ========== ADMIN & DOSEN SHARED ROUTES ==========
@@ -120,4 +138,12 @@ Route::middleware('auth:sanctum')->group(function () {
         // Lihat materi
         Route::get('/materi/mahasiswa/me', [MateriController::class, 'getMateriMahasiswa']);
     });
+
+    // ========== SHARED ROUTES (All authenticated users) ==========
+    // Pengumuman (accessible by all roles)
+    Route::get('/pengumuman', [PengumumanController::class, 'index']);
+    Route::get('/pengumuman/{id}', [PengumumanController::class, 'show']);
+    
+    // Profile Management (accessible by all roles)
+    Route::put('/profile/update', [UserController::class, 'updateProfile']);
 });

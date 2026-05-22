@@ -9,6 +9,8 @@ import 'routes/app_routes.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
+import 'screens/admin/manage_pengumuman_screen.dart';
+import 'screens/admin/export_data_screen.dart';
 import 'screens/dosen/dosen_dashboard_screen.dart';
 import 'screens/mahasiswa/mahasiswa_dashboard_screen.dart';
 
@@ -58,7 +60,11 @@ class MyApp extends StatelessWidget {
             routes: {
               AppRoutes.splash: (context) => const SplashScreen(),
               AppRoutes.login: (context) => const LoginScreen(),
-              AppRoutes.adminDashboard: (context) => AdminDashboardScreen(),
+              AppRoutes.adminDashboard: (context) =>
+                  const AdminDashboardScreen(),
+              AppRoutes.adminPengumuman: (context) =>
+                  const ManagePengumumanScreen(),
+              AppRoutes.adminExport: (context) => const ExportDataScreen(),
               AppRoutes.dosenDashboard: (context) =>
                   const DosenDashboardScreen(),
               AppRoutes.mahasiswaDashboard: (context) =>

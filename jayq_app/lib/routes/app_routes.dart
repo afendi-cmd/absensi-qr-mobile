@@ -10,6 +10,8 @@ class AppRoutes {
   static const String adminMataKuliah = '/admin/mata-kuliah';
   static const String adminPeserta = '/admin/peserta';
   static const String adminRekap = '/admin/rekap';
+  static const String adminPengumuman = '/admin/pengumuman';
+  static const String adminExport = '/admin/export';
 
   // Dosen Routes
   static const String dosenDashboard = '/dosen/dashboard';

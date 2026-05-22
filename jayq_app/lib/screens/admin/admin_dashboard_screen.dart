@@ -10,6 +10,7 @@ import 'statistics_screen.dart';
 import 'admin_profile_screen.dart';
 import 'admin_schedule_screen.dart';
 import 'admin_history_screen.dart';
+import 'advanced_statistics_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -70,9 +71,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               const SizedBox(height: 20),
               _buildStatisticsCards(isDark),
               const SizedBox(height: 20),
-              _buildTrenPresensi(isDark),
-              const SizedBox(height: 20),
               _buildAksiCepat(isDark),
+              const SizedBox(height: 20),
+              _buildTrenPresensi(isDark),
               const SizedBox(height: 16),
               _buildPengumumanSistem(isDark),
               const SizedBox(height: 80),
@@ -499,95 +500,148 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildAksiCepat(bool isDark) {
+    // Daftar semua aksi cepat
+    final List<Map<String, dynamic>> allActions = [
+      {
+        'icon': Icons.person_add_alt,
+        'label': 'Kelola\nDosen',
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ManageDosenScreen()),
+        ),
+      },
+      {
+        'icon': Icons.group_add,
+        'label': 'Kelola\nMhs',
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ManageMahasiswaScreen(),
+          ),
+        ),
+      },
+      {
+        'icon': Icons.library_books,
+        'label': 'Kelola\nMatkul',
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ManageMataKuliahScreen(),
+          ),
+        ),
+      },
+      {
+        'icon': Icons.groups,
+        'label': 'Kelola\nPeserta',
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ManagePesertaScreen()),
+        ),
+      },
+      {
+        'icon': Icons.campaign,
+        'label': 'Pengumuman',
+        'onTap': () => Navigator.pushNamed(context, '/admin/pengumuman'),
+      },
+      {
+        'icon': Icons.download,
+        'label': 'Export\nData',
+        'onTap': () => Navigator.pushNamed(context, '/admin/export'),
+      },
+      {
+        'icon': Icons.assessment,
+        'label': 'Laporan\nPresensi',
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const StatisticsScreen()),
+        ),
+      },
+      {
+        'icon': Icons.bar_chart,
+        'label': 'Statistik\nLanjutan',
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AdvancedStatisticsScreen(),
+          ),
+        ),
+      },
+    ];
+
+    // Tampilkan maksimal 8 item (2 baris x 4 kolom)
+    final displayedActions = allActions.take(8).toList();
+    final hasMore = allActions.length > 8;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Aksi Cepat',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white : const Color(0xFF111827),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // First row - 3 buttons
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildAksiCepatButton(
-              icon: Icons.person_add_alt,
-              label: 'Kelola Dosen',
-              isDark: isDark,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ManageDosenScreen(),
-                  ),
-                );
-              },
+            Text(
+              'Aksi Cepat',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : const Color(0xFF111827),
+              ),
             ),
-            _buildAksiCepatButton(
-              icon: Icons.group_add,
-              label: 'Kelola Mhs',
-              isDark: isDark,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ManageMahasiswaScreen(),
-                  ),
-                );
-              },
-            ),
-            _buildAksiCepatButton(
-              icon: Icons.library_books,
-              label: 'Kelola Matkul',
-              isDark: isDark,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ManageMataKuliahScreen(),
-                  ),
-                );
-              },
-            ),
+            if (hasMore)
+              TextButton(
+                onPressed: () {
+                  // TODO: Navigate to all actions screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Fitur Lihat Lainnya akan segera hadir'),
+                    ),
+                  );
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      'Lihat Lainnya',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isDark
+                            ? const Color(0xFF60A5FA)
+                            : const Color(0xFF2563EB),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 12,
+                      color: isDark
+                          ? const Color(0xFF60A5FA)
+                          : const Color(0xFF2563EB),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
         const SizedBox(height: 16),
-        // Second row - 2 buttons centered
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildAksiCepatButton(
-              icon: Icons.groups,
-              label: 'Kelola\nPeserta',
+        // Grid 4 kolom x 2 baris
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.85,
+          ),
+          itemCount: displayedActions.length,
+          itemBuilder: (context, index) {
+            final action = displayedActions[index];
+            return _buildAksiCepatButton(
+              icon: action['icon'],
+              label: action['label'],
               isDark: isDark,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ManagePesertaScreen(),
-                  ),
-                );
-              },
-            ),
-            _buildAksiCepatButton(
-              icon: Icons.assessment,
-              label: 'Laporan\nPresensi',
-              isDark: isDark,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const StatisticsScreen(),
-                  ),
-                );
-              },
-            ),
-          ],
+              onTap: action['onTap'],
+            );
+          },
         ),
       ],
     );
@@ -603,10 +657,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 68,
-            height: 68,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFF1E40AF),
               borderRadius: BorderRadius.circular(16),
@@ -622,20 +677,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ],
             ),
-            child: Icon(icon, color: Colors.white, size: 28),
+            child: Icon(icon, color: Colors.white, size: 26),
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            width: 68,
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white : const Color(0xFF111827),
-                height: 1.2,
-              ),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: isDark ? Colors.white : const Color(0xFF111827),
+              height: 1.2,
             ),
           ),
         ],

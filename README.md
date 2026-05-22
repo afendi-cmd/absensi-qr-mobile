@@ -284,7 +284,9 @@ Admin dapat:
 
 - ✅ Melihat statistik presensi
 - ✅ Melihat laporan kehadiran
-- ⏳ Export laporan (opsional)
+- ✅ Export laporan (CSV)
+- ✅ Statistik lanjutan dengan chart
+- ✅ Analitik per mata kuliah
 
 ### 14. 🌙 Dark Mode
 
@@ -302,6 +304,46 @@ Sistem menampilkan:
 - Pengumuman
 - Informasi sistem
 - Update aktivitas
+
+### 16. 📢 Kelola Pengumuman (Admin)
+
+Admin dapat:
+
+- ✅ Membuat pengumuman
+- ✅ Edit pengumuman
+- ✅ Hapus pengumuman
+- ✅ Set target (All/Dosen/Mahasiswa)
+- ✅ Set tipe (Info/Penting/Urgent)
+- ✅ Aktifkan/Nonaktifkan pengumuman
+
+### 17. 📥 Export Data (Admin)
+
+Admin dapat export data ke CSV:
+
+- ✅ Export data mahasiswa
+- ✅ Export data dosen
+- ✅ Export data mata kuliah
+- ✅ Export data absensi
+- ✅ Export rekap per mata kuliah
+- ✅ File tersimpan otomatis di device
+
+### 18. 🔑 Reset Password User (Admin)
+
+Admin dapat:
+
+- ✅ Reset password dosen
+- ✅ Reset password mahasiswa
+- ✅ Set password baru untuk user
+
+### 19. 📈 Statistik Lanjutan (Admin)
+
+Dashboard admin menampilkan:
+
+- ✅ Chart absensi 7 hari terakhir
+- ✅ Top 5 mata kuliah dengan absensi terbanyak
+- ✅ Persentase kehadiran per mata kuliah
+- ✅ Statistik user per role
+- ✅ Aktivitas terbaru real-time
 
 ---
 
@@ -681,15 +723,19 @@ Output akhir dari proyek JAYQ berupa:
 - [x] Upload materi
 - [x] Rekap absensi
 - [x] Dark mode
+- [x] Kelola pengumuman
+- [x] Export data (CSV)
+- [x] Reset password user
+- [x] Statistik lanjutan dengan chart
 
 ### 🚧 Phase 2: Enhancement
 
 - [ ] Push notifications
-- [ ] Export data (CSV/Excel)
+- [x] Export data (CSV/Excel) ✅
 - [ ] Validasi lokasi GPS
 - [ ] Email notifications
 - [ ] Forgot password
-- [ ] Profile management
+- [x] Profile management ✅
 
 ### 📋 Phase 3: Advanced Features
 

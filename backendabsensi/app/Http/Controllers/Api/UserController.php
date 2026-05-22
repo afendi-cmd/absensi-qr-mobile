@@ -159,4 +159,102 @@ class UserController extends Controller
             'message' => 'User berhasil dihapus'
         ], 200);
     }
+
+    /**
+     * Reset password user (Admin only)
+     */
+    public function resetPassword(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'new_password' => 'required|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password berhasil direset',
+            'data' => [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email
+            ]
+        ], 200);
+    }
+
+    /**
+     * Update profile (Self update)
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:100',
+            'email' => 'sometimes|required|email|unique:users,email,' . $user->id . '|max:100',
+            'no_hp' => 'sometimes|nullable|string|max:20',
+            'alamat' => 'sometimes|nullable|string',
+            'current_password' => 'required_with:new_password|string',
+            'new_password' => 'sometimes|required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check current password if changing password
+        if ($request->has('new_password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password saat ini tidak sesuai'
+                ], 422);
+            }
+            $user->password = Hash::make($request->new_password);
+        }
+
+        // Update other fields
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+        if ($request->has('email')) {
+            $user->email = $request->email;
+        }
+        if ($request->has('no_hp')) {
+            $user->no_hp = $request->no_hp;
+        }
+        if ($request->has('alamat')) {
+            $user->alamat = $request->alamat;
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diupdate',
+            'data' => $user
+        ], 200);
+    }
 }

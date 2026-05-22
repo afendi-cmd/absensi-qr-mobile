@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../routes/app_routes.dart';
+import 'edit_profile_screen.dart';
+import 'advanced_statistics_screen.dart';
 
 class AdminProfileScreen extends StatefulWidget {
   const AdminProfileScreen({super.key});
@@ -260,21 +262,42 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                   icon: Icons.person_outline,
                   title: 'Edit Profil',
                   isDark: isDark,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfileScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildDivider(isDark),
                 _buildMenuItem(
                   icon: Icons.lock_outline,
                   title: 'Ubah Password',
                   isDark: isDark,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfileScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildDivider(isDark),
                 _buildMenuItem(
-                  icon: Icons.security_outlined,
-                  title: 'Keamanan',
+                  icon: Icons.bar_chart,
+                  title: 'Statistik Lanjutan',
                   isDark: isDark,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdvancedStatisticsScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
