@@ -82,6 +82,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/peserta-mk', [PesertaMkController::class, 'store']);
         Route::delete('/peserta-mk/{id}', [PesertaMkController::class, 'destroy']);
         Route::get('/mata-kuliah/{id}/peserta', [PesertaMkController::class, 'getPesertaByMataKuliah']);
+        
+        // Absensi by Mata Kuliah (accessible by both admin and dosen)
+        Route::get('/mata-kuliah/{id}/absensi', [AbsensiController::class, 'getAbsensiByMataKuliah']);
     });
 
     // ========== DOSEN ROUTES ==========
@@ -95,7 +98,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Rekap Absensi
         Route::get('/rekap-absensi', [AbsensiController::class, 'rekapAbsensi']);
-        Route::get('/mata-kuliah/{id}/absensi', [AbsensiController::class, 'getAbsensiByMataKuliah']);
 
         // Kelola Tugas
         Route::post('/tugas', [TugasController::class, 'store']);

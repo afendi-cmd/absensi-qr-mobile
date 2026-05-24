@@ -70,7 +70,7 @@ class DashboardController extends Controller
             $totalTugas = Tugas::whereIn('mata_kuliah_id', $mataKuliahIds)->count();
             
             $tugasSelesai = PengumpulanTugas::where('mahasiswa_id', $mahasiswaId)
-                ->whereNotNull('file_path')
+                ->whereNotNull('file_jawaban')
                 ->count();
             
             $tugasPending = $totalTugas - $tugasSelesai;

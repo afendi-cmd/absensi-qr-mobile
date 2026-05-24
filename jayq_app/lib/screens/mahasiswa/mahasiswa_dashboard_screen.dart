@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
-import '../../widgets/common/stat_card.dart';
 
 class MahasiswaDashboardScreen extends StatefulWidget {
   const MahasiswaDashboardScreen({super.key});
@@ -19,7 +18,6 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // Load data saat screen pertama kali dibuka
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final dashboardProvider = Provider.of<DashboardProvider>(
@@ -37,120 +35,150 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-        ],
+      backgroundColor: const Color(0xFFF8F9FB),
+      body: SafeArea(
+        child: _selectedIndex == 0
+            ? _buildHomeContent()
+            : _selectedIndex == 1
+            ? _buildScheduleContent()
+            : _selectedIndex == 2
+            ? _buildHistoryContent()
+            : _buildProfileContent(),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWelcomeSection(),
-            const SizedBox(height: 30),
-
-            // Scan QR Button
-            _buildScanQrButton(),
-            const SizedBox(height: 30),
-
-            Text(
-              'Statistik Saya',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            _buildStatisticsGrid(),
-            const SizedBox(height: 30),
-
-            Text(
-              'Mata Kuliah Saya',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            _buildMataKuliahList(),
-            const SizedBox(height: 30),
-
-            Text(
-              'Tugas Mendatang',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            _buildTugasList(),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: _buildBottomNav(),
+      floatingActionButton: _buildScanQrFab(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
-  Widget _buildWelcomeSection() {
+  Widget _buildHomeContent() {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
+    final now = DateTime.now();
+    final dateFormat = DateFormat('EEEE, d MMMM yyyy');
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.mahasiswaColor,
-            AppColors.mahasiswaColor.withValues(alpha: 0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.mahasiswaColor.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.white,
-            child: Text(
-              user?.name.substring(0, 1).toUpperCase() ?? 'M',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.mahasiswaColor,
-              ),
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.white,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: const Color(0xFF003d9b),
+                  child: Text(
+                    user?.name.substring(0, 1).toUpperCase() ?? 'M',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Presensi Kampus',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF003d9b),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () {},
+                  color: const Color(0xFF003d9b),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
+
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Greeting
                 Text(
-                  'Halo,',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                  'Halo, ${user?.name ?? 'Mahasiswa'}!',
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF191c1e),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  user?.name ?? 'Mahasiswa',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                  dateFormat.format(now),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF737685),
                   ),
                 ),
-                if (user?.nim != null)
-                  Text(
-                    'NIM: ${user!.nim}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                  ),
+                const SizedBox(height: 20),
+
+                // Attendance Card
+                _buildAttendanceCard(),
+                const SizedBox(height: 24),
+
+                // Schedule Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Jadwal Hari Ini',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF191c1e),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _selectedIndex = 1);
+                      },
+                      child: const Text(
+                        'Lihat Semua',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF003d9b),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Schedule Cards
+                _buildScheduleList(),
+                const SizedBox(height: 24),
+
+                // Quick Actions
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildQuickActionCard(
+                        icon: Icons.event_note,
+                        label: 'Kalender\nAkademik',
+                        onTap: () {},
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildQuickActionCard(
+                        icon: Icons.assignment_turned_in,
+                        label: 'Tugas &\nUjian',
+                        onTap: () {},
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -159,135 +187,137 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
     );
   }
 
-  Widget _buildScanQrButton() {
-    return Container(
-      width: double.infinity,
-      height: 120,
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            // Navigate to Scan QR
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.qr_code_scanner, size: 48, color: Colors.white),
-              const SizedBox(height: 8),
-              Text(
-                'Scan QR Code',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Tap untuk absen',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+  Widget _buildAttendanceCard() {
+    return Consumer<DashboardProvider>(
+      builder: (context, provider, child) {
+        final stats = provider.mahasiswaStats;
+        final attendance = stats?.persentaseKehadiran ?? 0.0;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF003d9b), Color(0xFF0052cc)],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF003d9b).withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatisticsGrid() {
-    return Consumer<DashboardProvider>(
-      builder: (context, dashboardProvider, child) {
-        final stats = dashboardProvider.mahasiswaStats;
-        final isLoading = dashboardProvider.isLoadingMahasiswaStats;
-
-        if (isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.3,
-          children: [
-            StatCard(
-              title: 'Mata Kuliah',
-              value: '${stats?.totalMataKuliah ?? 0}',
-              icon: Icons.book,
-              color: AppColors.info,
-            ),
-            StatCard(
-              title: 'Kehadiran',
-              value: '${stats?.persentaseKehadiran.toStringAsFixed(0) ?? 0}%',
-              icon: Icons.check_circle,
-              color: AppColors.success,
-            ),
-            StatCard(
-              title: 'Tugas Selesai',
-              value:
-                  '${stats?.tugasSelesai ?? 0}/${(stats?.tugasSelesai ?? 0) + (stats?.tugasPending ?? 0)}',
-              icon: Icons.assignment_turned_in,
-              color: AppColors.mahasiswaColor,
-            ),
-            StatCard(
-              title: 'Tugas Pending',
-              value: '${stats?.tugasPending ?? 0}',
-              icon: Icons.pending_actions,
-              color: AppColors.warning,
-            ),
-          ],
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Total Kehadiran',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFFc4d2ff),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${attendance.toStringAsFixed(0)}%',
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Status: Aman',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.analytics_outlined,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildMataKuliahList() {
+  Widget _buildScheduleList() {
     return Consumer<DashboardProvider>(
-      builder: (context, dashboardProvider, child) {
-        final mataKuliahList = dashboardProvider.mataKuliahList;
-        final isLoading = dashboardProvider.isLoadingMataKuliah;
-
-        if (isLoading) {
-          return const Center(child: CircularProgressIndicator());
+      builder: (context, provider, child) {
+        if (provider.isLoadingMataKuliah) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
 
+        final mataKuliahList = provider.mataKuliahList;
+
         if (mataKuliahList.isEmpty) {
-          return Card(
-            elevation: 2,
-            shadowColor: AppColors.shadow,
-            shape: RoundedRectangleBorder(
+          return Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFe1e2e4)),
             ),
-            child: const Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(child: Text('Belum ada mata kuliah terdaftar')),
+            child: const Center(
+              child: Text(
+                'Tidak ada jadwal hari ini',
+                style: TextStyle(fontSize: 14, color: Color(0xFF737685)),
+              ),
             ),
           );
         }
 
         return Column(
-          children: mataKuliahList.map((mk) {
+          children: mataKuliahList.take(3).map((mk) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: _buildMataKuliahCard(
-                kodeMk: mk.kodeMk,
-                namaMk: mk.namaMk,
-                dosen: mk.dosenNama ?? 'Dosen',
-                kehadiran: 0, // TODO: Hitung dari data absensi
+              child: _buildScheduleCard(
+                time: '08:00 - 10:30',
+                title: mk.namaMk,
+                location: 'Lab Komputer 3',
+                lecturer: mk.dosen?.nama ?? 'Dosen',
+                status: 'Hadir',
+                statusColor: const Color(0xFF10B981),
+                statusBgColor: const Color(0xFFD1FAE5),
               ),
             );
           }).toList(),
@@ -296,73 +326,233 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
     );
   }
 
-  Widget _buildMataKuliahCard({
-    required String kodeMk,
-    required String namaMk,
-    required String dosen,
-    required int kehadiran,
+  Widget _buildScheduleCard({
+    required String time,
+    required String title,
+    required String location,
+    required String lecturer,
+    required String status,
+    required Color statusColor,
+    required Color statusBgColor,
   }) {
-    return Card(
-      elevation: 2,
-      shadowColor: AppColors.shadow,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFe1e2e4)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF003d9b).withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                time,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF003d9b),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: statusBgColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF191c1e),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(
+                Icons.location_on_outlined,
+                size: 16,
+                color: Color(0xFF737685),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                location,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF737685)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(
+                Icons.person_outline,
+                size: 16,
+                color: Color(0xFF737685),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                lecturer,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF737685)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionCard({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFe1e2e4)),
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    kodeMk,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: kehadiran >= 80
-                        ? AppColors.success.withValues(alpha: 0.1)
-                        : AppColors.warning.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '$kehadiran%',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: kehadiran >= 80
-                          ? AppColors.success
-                          : AppColors.warning,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFF003d9b).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: const Color(0xFF003d9b), size: 24),
             ),
             const SizedBox(height: 12),
-            Text(namaMk, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF191c1e),
+                height: 1.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleContent() {
+    return const Center(child: Text('Jadwal Screen'));
+  }
+
+  Widget _buildHistoryContent() {
+    return const Center(child: Text('Riwayat Screen'));
+  }
+
+  Widget _buildProfileContent() {
+    return const Center(child: Text('Profil Screen'));
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(icon: Icons.home, label: 'Beranda', index: 0),
+              _buildNavItem(
+                icon: Icons.calendar_today,
+                label: 'Jadwal',
+                index: 1,
+              ),
+              _buildNavItem(icon: Icons.history, label: 'Riwayat', index: 2),
+              _buildNavItem(icon: Icons.person, label: 'Profil', index: 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required int index,
+  }) {
+    final isActive = _selectedIndex == index;
+
+    return InkWell(
+      onTap: () => setState(() => _selectedIndex = index),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFF003d9b).withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive
+                  ? const Color(0xFF003d9b)
+                  : const Color(0xFF737685),
+              size: 24,
+            ),
             const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.person, size: 16, color: AppColors.textLight),
-                const SizedBox(width: 4),
-                Text(dosen, style: Theme.of(context).textTheme.bodySmall),
-              ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                color: isActive
+                    ? const Color(0xFF003d9b)
+                    : const Color(0xFF737685),
+              ),
             ),
           ],
         ),
@@ -370,116 +560,16 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
     );
   }
 
-  Widget _buildTugasList() {
-    return Column(
-      children: [
-        _buildTugasCard(
-          judul: 'Tugas UTS - Mobile Programming',
-          mataKuliah: 'Pemrograman Mobile',
-          deadline: DateTime.now().add(const Duration(days: 2)),
-          isUrgent: true,
-        ),
-        const SizedBox(height: 12),
-        _buildTugasCard(
-          judul: 'Laporan Praktikum Database',
-          mataKuliah: 'Basis Data',
-          deadline: DateTime.now().add(const Duration(days: 5)),
-          isUrgent: false,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTugasCard({
-    required String judul,
-    required String mataKuliah,
-    required DateTime deadline,
-    required bool isUrgent,
-  }) {
-    final daysLeft = deadline.difference(DateTime.now()).inDays;
-
-    return Card(
-      elevation: 2,
-      shadowColor: AppColors.shadow,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    judul,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                if (isUrgent)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Urgent',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.error,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(mataKuliah, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  size: 16,
-                  color: isUrgent ? AppColors.error : AppColors.textLight,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '$daysLeft hari lagi',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isUrgent ? AppColors.error : AppColors.textLight,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: (index) {
-        setState(() {
-          _selectedIndex = index;
-        });
+  Widget _buildScanQrFab() {
+    return FloatingActionButton(
+      onPressed: () {
+        // TODO: Navigate to QR Scanner
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Scan QR akan segera hadir')),
+        );
       },
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.textLight,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard),
-          label: 'Dashboard',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Mata Kuliah'),
-        BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Tugas'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
+      backgroundColor: const Color(0xFF003d9b),
+      child: const Icon(Icons.qr_code_scanner, color: Colors.white),
     );
   }
 }

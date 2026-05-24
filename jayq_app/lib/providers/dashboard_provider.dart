@@ -18,10 +18,13 @@ class DashboardProvider with ChangeNotifier {
   // Mata Kuliah
   List<MataKuliah> _mataKuliahList = [];
   List<MataKuliah> get mataKuliahList => _mataKuliahList;
+  List<MataKuliah> get allMataKuliah =>
+      _mataKuliahList; // Alias for consistency
 
   // Users
   List<UserModel> _usersList = [];
   List<UserModel> get usersList => _usersList;
+  List<UserModel> get allUsers => _usersList; // Alias for consistency
 
   List<UserModel> _dosenList = [];
   List<UserModel> get dosenList => _dosenList;
@@ -152,5 +155,70 @@ class DashboardProvider with ChangeNotifier {
     _mahasiswaList = [];
     _error = null;
     notifyListeners();
+  }
+
+  // Create Mata Kuliah
+  Future<void> createMataKuliah(
+    String namaMk,
+    String kodeMk,
+    int sks,
+    String semester,
+    int dosenId,
+  ) async {
+    try {
+      await _dashboardService.createMataKuliah(
+        namaMk,
+        kodeMk,
+        sks,
+        semester,
+        dosenId,
+      );
+      // Reload mata kuliah list
+      await loadAllMataKuliah();
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('Error creating mata kuliah: $e');
+      rethrow;
+    }
+  }
+
+  // Update Mata Kuliah
+  Future<void> updateMataKuliah(
+    int id,
+    String namaMk,
+    String kodeMk,
+    int sks,
+    String semester,
+    int dosenId,
+  ) async {
+    try {
+      await _dashboardService.updateMataKuliah(
+        id,
+        namaMk,
+        kodeMk,
+        sks,
+        semester,
+        dosenId,
+      );
+      // Reload mata kuliah list
+      await loadAllMataKuliah();
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('Error updating mata kuliah: $e');
+      rethrow;
+    }
+  }
+
+  // Delete Mata Kuliah
+  Future<void> deleteMataKuliah(int id) async {
+    try {
+      await _dashboardService.deleteMataKuliah(id);
+      // Reload mata kuliah list
+      await loadAllMataKuliah();
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('Error deleting mata kuliah: $e');
+      rethrow;
+    }
   }
 }

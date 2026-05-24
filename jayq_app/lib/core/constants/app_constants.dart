@@ -26,7 +26,7 @@ class AppConstants {
   //    Pastikan HP dan komputer di WiFi yang sama
   //    Backend harus jalan dengan: php artisan serve --host=0.0.0.0
   static const String baseUrl =
-      "http://192.168.1.6:8000/api"; // Ganti dengan IP Anda
+      "http://192.168.1.10:8000/api"; // Ganti dengan IP Anda
 
   // 4. Untuk iOS Simulator
   //    Gunakan saat: flutter run -d ios

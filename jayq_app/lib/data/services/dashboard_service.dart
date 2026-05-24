@@ -116,4 +116,60 @@ class DashboardService {
       throw Exception('Failed to load users by role: $e');
     }
   }
+
+  // Create Mata Kuliah
+  Future<void> createMataKuliah(
+    String namaMk,
+    String kodeMk,
+    int sks,
+    String semester,
+    int dosenId,
+  ) async {
+    try {
+      await _apiService.post('/mata-kuliah', {
+        'nama_mk': namaMk,
+        'kode_mk': kodeMk,
+        'sks': sks,
+        'semester': semester,
+        'dosen_id': dosenId,
+      });
+    } catch (e) {
+      // Extract clean error message
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      throw Exception(errorMessage);
+    }
+  }
+
+  // Update Mata Kuliah
+  Future<void> updateMataKuliah(
+    int id,
+    String namaMk,
+    String kodeMk,
+    int sks,
+    String semester,
+    int dosenId,
+  ) async {
+    try {
+      await _apiService.put('/mata-kuliah/$id', {
+        'nama_mk': namaMk,
+        'kode_mk': kodeMk,
+        'sks': sks,
+        'semester': semester,
+        'dosen_id': dosenId,
+      });
+    } catch (e) {
+      // Extract clean error message
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      throw Exception(errorMessage);
+    }
+  }
+
+  // Delete Mata Kuliah
+  Future<void> deleteMataKuliah(int id) async {
+    try {
+      await _apiService.delete('/mata-kuliah/$id');
+    } catch (e) {
+      throw Exception('Failed to delete mata kuliah: $e');
+    }
+  }
 }

@@ -174,8 +174,22 @@ class ApiService {
     } else if (statusCode == 404) {
       throw Exception('Not found');
     } else if (statusCode == 422) {
-      final error = jsonDecode(body);
-      throw Exception(error['message'] ?? 'Validation error');
+      // Handle validation errors with detailed messages
+      try {
+        final error = jsonDecode(body);
+        if (error['errors'] != null && error['errors'] is Map) {
+          // Extract first error message from validation errors
+          final errors = error['errors'] as Map<String, dynamic>;
+          final firstError = errors.values.first;
+          if (firstError is List && firstError.isNotEmpty) {
+            throw Exception(firstError[0].toString());
+          }
+        }
+        throw Exception(error['message'] ?? 'Validation error');
+      } catch (e) {
+        if (e is Exception) rethrow;
+        throw Exception('Validation error');
+      }
     } else if (statusCode >= 500) {
       throw Exception('Server error - Please try again later');
     } else {
