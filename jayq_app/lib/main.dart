@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/dashboard_provider.dart';
@@ -13,9 +16,35 @@ import 'screens/admin/manage_pengumuman_screen.dart';
 import 'screens/admin/export_data_screen.dart';
 import 'screens/dosen/dosen_dashboard_screen.dart';
 import 'screens/mahasiswa/mahasiswa_dashboard_screen.dart';
+import 'data/services/notification_service.dart';
 
-void main() {
+// Background message handler (must be top-level function)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  debugPrint('Background message: ${message.notification?.title}');
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('Firebase initialized successfully');
+
+    // Set background message handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // Initialize notification service
+    await NotificationService().initialize();
+    debugPrint('Notification service initialized');
+  } catch (e) {
+    debugPrint('Firebase initialization error: $e');
+    // Continue app execution even if Firebase fails
+  }
 
   // Set preferred orientations
   SystemChrome.setPreferredOrientations([

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\MateriController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\PengumumanController;
 use App\Http\Controllers\Api\ExportController;
+use App\Http\Controllers\Api\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +68,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/pengumuman/{id}', [PengumumanController::class, 'update']);
         Route::delete('/pengumuman/{id}', [PengumumanController::class, 'destroy']);
         Route::post('/pengumuman/{id}/toggle-active', [PengumumanController::class, 'toggleActive']);
+
+        // Notification Management
+        Route::post('/notifications/send', [NotificationController::class, 'sendToUsers']);
+        Route::get('/notifications/history', [NotificationController::class, 'history']);
 
         // Export Data
         Route::get('/export/absensi', [ExportController::class, 'exportAbsensi']);
@@ -142,9 +147,14 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ========== SHARED ROUTES (All authenticated users) ==========
+    // FCM Token Management (accessible by all roles)
+    Route::post('/user/fcm-token', [UserController::class, 'saveFcmToken']);
+    
     // Pengumuman (accessible by all roles)
     Route::get('/pengumuman', [PengumumanController::class, 'index']);
     Route::get('/pengumuman/{id}', [PengumumanController::class, 'show']);
+    Route::post('/pengumuman/{id}/mark-as-read', [PengumumanController::class, 'markAsRead']);
+    Route::get('/pengumuman/unread/count', [PengumumanController::class, 'getUnreadCount']);
     
     // Profile Management (accessible by all roles)
     Route::put('/profile/update', [UserController::class, 'updateProfile']);

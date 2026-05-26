@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../data/services/user_service.dart';
+import 'add_mahasiswa_screen.dart';
 
 class ManageMahasiswaScreen extends StatefulWidget {
   const ManageMahasiswaScreen({super.key});
@@ -64,354 +65,30 @@ class _ManageMahasiswaScreenState extends State<ManageMahasiswaScreen> {
     });
   }
 
-  void _showAddDialog(bool isDark) {
-    final namaController = TextEditingController();
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
-        title: Text(
-          'Tambah Mahasiswa',
-          style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF1F2937),
-          ),
-        ),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: namaController,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Nama',
-                    labelStyle: TextStyle(
-                      color: isDark
-                          ? const Color(0xFF9CA3AF)
-                          : const Color(0xFF6B7280),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFE5E7EB),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF10B981)),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Nama tidak boleh kosong';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: emailController,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: TextStyle(
-                      color: isDark
-                          ? const Color(0xFF9CA3AF)
-                          : const Color(0xFF6B7280),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFE5E7EB),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF10B981)),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Email tidak boleh kosong';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Email tidak valid';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: passwordController,
-                  obscureText: true,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: TextStyle(
-                      color: isDark
-                          ? const Color(0xFF9CA3AF)
-                          : const Color(0xFF6B7280),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFE5E7EB),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF10B981)),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Password tidak boleh kosong';
-                    }
-                    if (value.length < 6) {
-                      return 'Password minimal 6 karakter';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Batal',
-              style: TextStyle(
-                color: isDark
-                    ? const Color(0xFF9CA3AF)
-                    : const Color(0xFF6B7280),
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context);
-                try {
-                  await _userService.createUser({
-                    'nama': namaController.text,
-                    'email': emailController.text,
-                    'password': passwordController.text,
-                    'role': 'mahasiswa',
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Mahasiswa berhasil ditambahkan'),
-                      backgroundColor: Color(0xFF10B981),
-                    ),
-                  );
-                  _loadData();
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Gagal menambahkan mahasiswa: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-            ),
-            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+  Future<void> _navigateToAddMahasiswa() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddMahasiswaScreen()),
     );
+
+    // Reload data if mahasiswa was added successfully
+    if (result == true) {
+      _loadData();
+    }
   }
 
-  void _showEditDialog(Map<String, dynamic> mahasiswa, bool isDark) {
-    final namaController = TextEditingController(text: mahasiswa['nama']);
-    final emailController = TextEditingController(text: mahasiswa['email']);
-    final passwordController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
-        title: Text(
-          'Edit Mahasiswa',
-          style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF1F2937),
-          ),
-        ),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: namaController,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Nama',
-                    labelStyle: TextStyle(
-                      color: isDark
-                          ? const Color(0xFF9CA3AF)
-                          : const Color(0xFF6B7280),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFE5E7EB),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF10B981)),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Nama tidak boleh kosong';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: emailController,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: TextStyle(
-                      color: isDark
-                          ? const Color(0xFF9CA3AF)
-                          : const Color(0xFF6B7280),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFE5E7EB),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF10B981)),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Email tidak boleh kosong';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Email tidak valid';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: passwordController,
-                  obscureText: true,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Password (kosongkan jika tidak diubah)',
-                    labelStyle: TextStyle(
-                      color: isDark
-                          ? const Color(0xFF9CA3AF)
-                          : const Color(0xFF6B7280),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFE5E7EB),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF10B981)),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value != null && value.isNotEmpty && value.length < 6) {
-                      return 'Password minimal 6 karakter';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Batal',
-              style: TextStyle(
-                color: isDark
-                    ? const Color(0xFF9CA3AF)
-                    : const Color(0xFF6B7280),
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context);
-                try {
-                  final updateData = {
-                    'nama': namaController.text,
-                    'email': emailController.text,
-                    'role': 'mahasiswa',
-                  };
-                  if (passwordController.text.isNotEmpty) {
-                    updateData['password'] = passwordController.text;
-                  }
-                  await _userService.updateUser(mahasiswa['id'], updateData);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Mahasiswa berhasil diupdate'),
-                      backgroundColor: Color(0xFF10B981),
-                    ),
-                  );
-                  _loadData();
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Gagal mengupdate mahasiswa: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-            ),
-            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+  Future<void> _navigateToEditMahasiswa(Map<String, dynamic> mahasiswa) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddMahasiswaScreen(mahasiswa: mahasiswa),
       ),
     );
+
+    // Reload data if mahasiswa was updated successfully
+    if (result == true) {
+      _loadData();
+    }
   }
 
   void _showDeleteDialog(Map<String, dynamic> mahasiswa, bool isDark) {
@@ -826,7 +503,7 @@ class _ManageMahasiswaScreenState extends State<ManageMahasiswaScreen> {
                                     ),
                                   ],
                                 ),
-                                trailing: PopupMenuButton(
+                                trailing: PopupMenuButton<String>(
                                   icon: Icon(
                                     Icons.more_vert,
                                     color: isDark
@@ -836,45 +513,37 @@ class _ManageMahasiswaScreenState extends State<ManageMahasiswaScreen> {
                                   color: isDark
                                       ? const Color(0xFF374151)
                                       : Colors.white,
+                                  onSelected: (value) async {
+                                    if (value == 'detail') {
+                                      _showDetailBottomSheet(mahasiswa, isDark);
+                                    } else if (value == 'edit') {
+                                      await _navigateToEditMahasiswa(mahasiswa);
+                                    } else if (value == 'delete') {
+                                      _showDeleteDialog(mahasiswa, isDark);
+                                    }
+                                  },
                                   itemBuilder: (context) => [
-                                    PopupMenuItem(
+                                    const PopupMenuItem<String>(
+                                      value: 'detail',
                                       child: Row(
                                         children: [
-                                          const Icon(
-                                            Icons.visibility,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'Detail',
-                                            style: TextStyle(
-                                              color: isDark
-                                                  ? Colors.white
-                                                  : const Color(0xFF1F2937),
-                                            ),
-                                          ),
+                                          Icon(Icons.visibility, size: 20),
+                                          SizedBox(width: 12),
+                                          Text('Detail'),
                                         ],
                                       ),
-                                      onTap: () {
-                                        Future.delayed(
-                                          const Duration(milliseconds: 100),
-                                          () => _showDetailBottomSheet(
-                                            mahasiswa,
-                                            isDark,
-                                          ),
-                                        );
-                                      },
                                     ),
-                                    PopupMenuItem(
+                                    const PopupMenuItem<String>(
+                                      value: 'edit',
                                       child: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.edit,
                                             size: 20,
                                             color: Color(0xFF10B981),
                                           ),
-                                          const SizedBox(width: 12),
-                                          const Text(
+                                          SizedBox(width: 12),
+                                          Text(
                                             'Edit',
                                             style: TextStyle(
                                               color: Color(0xFF10B981),
@@ -882,18 +551,10 @@ class _ManageMahasiswaScreenState extends State<ManageMahasiswaScreen> {
                                           ),
                                         ],
                                       ),
-                                      onTap: () {
-                                        Future.delayed(
-                                          const Duration(milliseconds: 100),
-                                          () => _showEditDialog(
-                                            mahasiswa,
-                                            isDark,
-                                          ),
-                                        );
-                                      },
                                     ),
-                                    PopupMenuItem(
-                                      child: const Row(
+                                    const PopupMenuItem<String>(
+                                      value: 'delete',
+                                      child: Row(
                                         children: [
                                           Icon(
                                             Icons.delete,
@@ -907,15 +568,6 @@ class _ManageMahasiswaScreenState extends State<ManageMahasiswaScreen> {
                                           ),
                                         ],
                                       ),
-                                      onTap: () {
-                                        Future.delayed(
-                                          const Duration(milliseconds: 100),
-                                          () => _showDeleteDialog(
-                                            mahasiswa,
-                                            isDark,
-                                          ),
-                                        );
-                                      },
                                     ),
                                   ],
                                 ),
@@ -927,8 +579,8 @@ class _ManageMahasiswaScreenState extends State<ManageMahasiswaScreen> {
               ),
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddDialog(isDark),
-        backgroundColor: const Color(0xFF10B981),
+        onPressed: _navigateToAddMahasiswa,
+        backgroundColor: const Color(0xFF003D9B),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

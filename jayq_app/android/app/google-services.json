@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "853707880074",
+    "firebase_url": "https://ronaldb-f7d42-default-rtdb.firebaseio.com",
+    "project_id": "ronaldb-f7d42",
+    "storage_bucket": "ronaldb-f7d42.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:853707880074:android:d9835f1801f6ab8dd7df73",
+        "android_client_info": {
+          "package_name": "com.jayq.jayq_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhswmM3vtFdASY6jL_fxMKn_IGpY6Vlww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

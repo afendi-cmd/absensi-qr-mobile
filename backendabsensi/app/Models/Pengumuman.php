@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pengumuman extends Model
 {
@@ -30,4 +31,18 @@ class Pengumuman extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function reads(): HasMany
+    {
+        return $this->hasMany(PengumumanRead::class);
+    }
+
+    /**
+     * Check if pengumuman has been read by specific user
+     */
+    public function isReadBy(int $userId): bool
+    {
+        return $this->reads()->where('user_id', $userId)->exists();
+    }
 }
+

@@ -257,4 +257,31 @@ class UserController extends Controller
             'data' => $user
         ], 200);
     }
+
+    /**
+     * Save FCM token for push notifications
+     */
+    public function saveFcmToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fcm_token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = $request->user();
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'FCM token saved successfully',
+        ], 200);
+    }
 }

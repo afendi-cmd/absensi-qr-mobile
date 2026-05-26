@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../data/models/pengumuman_model.dart';
 import '../../data/services/pengumuman_service.dart';
 import '../../data/services/storage_service.dart';
+import 'broadcast_pengumuman_screen.dart';
 
 class ManagePengumumanScreen extends StatefulWidget {
   const ManagePengumumanScreen({super.key});
@@ -269,7 +270,27 @@ class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Kelola Pengumuman'), elevation: 0),
+      appBar: AppBar(
+        title: const Text('Kelola Pengumuman'),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.campaign),
+            tooltip: 'Broadcast Pengumuman',
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BroadcastPengumumanScreen(),
+                ),
+              );
+              if (result == true) {
+                _loadPengumuman();
+              }
+            },
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

@@ -142,4 +142,38 @@ class PengumumanService {
       throw Exception('Gagal mengubah status pengumuman: $e');
     }
   }
+
+  // Mark pengumuman as read
+  Future<void> markAsRead(int id) async {
+    try {
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/pengumuman/$id/mark-as-read',
+      );
+
+      if (!response.data['success']) {
+        throw Exception(response.data['message']);
+      }
+    } catch (e) {
+      // Silently fail - not critical
+      print('Error marking as read: $e');
+    }
+  }
+
+  // Get unread count
+  Future<int> getUnreadCount() async {
+    try {
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/pengumuman/unread/count',
+      );
+
+      if (response.data['success']) {
+        return response.data['data']['unread_count'] as int;
+      } else {
+        return 0;
+      }
+    } catch (e) {
+      print('Error getting unread count: $e');
+      return 0;
+    }
+  }
 }

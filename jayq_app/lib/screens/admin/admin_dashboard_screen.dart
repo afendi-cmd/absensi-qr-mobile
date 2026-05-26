@@ -11,6 +11,11 @@ import 'admin_profile_screen.dart';
 import 'admin_schedule_screen.dart';
 import 'admin_history_screen.dart';
 import 'advanced_statistics_screen.dart';
+import 'broadcast_pengumuman_screen.dart';
+import 'notification_center_screen.dart';
+import '../../data/services/pengumuman_service.dart';
+import '../../data/services/storage_service.dart';
+import 'package:dio/dio.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -21,10 +26,13 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0;
+  int _notificationCount = 0;
+  late PengumumanService _pengumumanService;
 
   @override
   void initState() {
     super.initState();
+    _initializeServices();
     // Load data saat screen pertama kali dibuka
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final dashboardProvider = Provider.of<DashboardProvider>(
@@ -35,6 +43,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       dashboardProvider.loadAllUsers();
       dashboardProvider.loadAllMataKuliah();
     });
+  }
+
+  Future<void> _initializeServices() async {
+    final storageService = StorageService();
+    final token = await storageService.getToken();
+
+    final dio = Dio();
+    dio.options.headers['Authorization'] = 'Bearer $token';
+    dio.options.headers['Accept'] = 'application/json';
+
+    _pengumumanService = PengumumanService(dio);
+    _loadNotificationCount();
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      final unreadCount = await _pengumumanService.getUnreadCount();
+      setState(() {
+        _notificationCount = unreadCount;
+      });
+    } catch (e) {
+      // Silently fail
+    }
   }
 
   @override
@@ -122,10 +153,56 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               width: 1,
             ),
           ),
-          child: Icon(
-            Icons.notifications_outlined,
-            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
-            size: 20,
+          child: Stack(
+            children: [
+              Center(
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    Icons.notifications_outlined,
+                    color: isDark
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF6B7280),
+                    size: 20,
+                  ),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationCenterScreen(),
+                      ),
+                    );
+                    // Reload notification count after returning
+                    _loadNotificationCount();
+                  },
+                ),
+              ),
+              if (_notificationCount > 0)
+                Positioned(
+                  right: 6,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      _notificationCount > 9 ? '9+' : '$_notificationCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
@@ -541,7 +618,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       {
         'icon': Icons.campaign,
         'label': 'Pengumuman',
-        'onTap': () => Navigator.pushNamed(context, '/admin/pengumuman'),
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const BroadcastPengumumanScreen(),
+          ),
+        ),
       },
       {
         'icon': Icons.download,

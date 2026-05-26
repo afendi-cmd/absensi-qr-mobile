@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../providers/theme_provider.dart';
 import '../../data/services/user_service.dart';
 
@@ -16,6 +18,7 @@ class AddDosenScreen extends StatefulWidget {
 class _AddDosenScreenState extends State<AddDosenScreen> {
   final _formKey = GlobalKey<FormState>();
   final UserService _userService = UserService();
+  final ImagePicker _picker = ImagePicker();
 
   final _namaController = TextEditingController();
   final _nidnController = TextEditingController();
@@ -24,6 +27,7 @@ class _AddDosenScreenState extends State<AddDosenScreen> {
 
   String? _selectedProgramStudi;
   String? _selectedJabatan;
+  File? _selectedImage;
 
   bool _isLoading = false;
   bool _isPasswordVisible = false;
@@ -58,6 +62,34 @@ class _AddDosenScreenState extends State<AddDosenScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        final File imageFile = File(image.path);
+        final int fileSize = await imageFile.length();
+
+        // Check file size (max 2MB)
+        if (fileSize > 2 * 1024 * 1024) {
+          _showSnackBar('Ukuran file maksimal 2MB', isError: true);
+          return;
+        }
+
+        setState(() {
+          _selectedImage = imageFile;
+        });
+      }
+    } catch (e) {
+      _showSnackBar('Gagal memilih gambar: ${e.toString()}', isError: true);
+    }
   }
 
   Future<void> _handleSubmit() async {
@@ -219,6 +251,69 @@ class _AddDosenScreenState extends State<AddDosenScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Photo Upload Section
+            Center(
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF4B5563)
+                              : const Color(0xFFD1D5DB),
+                          width: 2,
+                          strokeAlign: BorderSide.strokeAlignInside,
+                        ),
+                        color: isDark
+                            ? const Color(0xFF374151)
+                            : const Color(0xFFF3F4F6),
+                      ),
+                      child: _selectedImage != null
+                          ? ClipOval(
+                              child: Image.file(
+                                _selectedImage!,
+                                fit: BoxFit.cover,
+                                width: 120,
+                                height: 120,
+                              ),
+                            )
+                          : Icon(
+                              Icons.add_a_photo,
+                              size: 40,
+                              color: isDark
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF737685),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Upload Foto Profil',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : const Color(0xFF003D9B),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Maksimal 2MB, format JPG atau PNG',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF737685),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
             _buildLabel('Nama Lengkap', isDark),
             const SizedBox(height: 8),
             _buildTextField(

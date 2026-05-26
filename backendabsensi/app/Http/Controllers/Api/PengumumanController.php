@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengumuman;
+use App\Models\PengumumanRead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -207,6 +208,80 @@ class PengumumanController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengubah status pengumuman',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Mark pengumuman as read
+    public function markAsRead(Request $request, $id)
+    {
+        try {
+            $pengumuman = Pengumuman::findOrFail($id);
+            $userId = $request->user()->id;
+
+            // Check if already marked as read
+            $existingRead = PengumumanRead::where('pengumuman_id', $id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$existingRead) {
+                PengumumanRead::create([
+                    'pengumuman_id' => $id,
+                    'user_id' => $userId,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengumuman ditandai sudah dibaca',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai pengumuman',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Get unread count
+    public function getUnreadCount(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            // Get all pengumuman IDs that match user's role
+            $query = Pengumuman::where('is_active', true);
+            
+            if ($user->role !== 'admin') {
+                $query->where(function($q) use ($user) {
+                    $q->where('target', 'all')
+                      ->orWhere('target', $user->role);
+                });
+            }
+            
+            $allPengumumanIds = $query->pluck('id');
+            
+            // Get pengumuman IDs that user has read
+            $readPengumumanIds = PengumumanRead::where('user_id', $user->id)
+                ->whereIn('pengumuman_id', $allPengumumanIds)
+                ->pluck('pengumuman_id');
+            
+            // Calculate unread count
+            $unreadCount = $allPengumumanIds->count() - $readPengumumanIds->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'unread_count' => $unreadCount,
+                    'total_count' => $allPengumumanIds->count(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil jumlah pengumuman belum dibaca',
                 'error' => $e->getMessage()
             ], 500);
         }

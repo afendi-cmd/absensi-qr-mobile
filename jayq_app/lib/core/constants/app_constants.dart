@@ -19,14 +19,14 @@ class AppConstants {
   // 2. Untuk emulator Android (DEFAULT)
   //    10.0.2.2 adalah alias untuk localhost dari emulator
   //    Gunakan saat: flutter run (di emulator)
-  //static const String baseUrl = "http://10.0.2.2:8000/api";
+  static const String baseUrl = "http://10.0.2.2:8000/api";
 
   // 3. Untuk HP fisik (ganti dengan IP komputer Anda)
   //    Cara cek IP: buka CMD/Terminal, ketik "ipconfig" (Windows) atau "ifconfig" (Mac/Linux)
   //    Pastikan HP dan komputer di WiFi yang sama
   //    Backend harus jalan dengan: php artisan serve --host=0.0.0.0
-  static const String baseUrl =
-      "http://192.168.1.10:8000/api"; // Ganti dengan IP Anda
+  // static const String baseUrl =
+  //     "http://192.168.1.10:8000/api"; // Ganti dengan IP Anda
 
   // 4. Untuk iOS Simulator
   //    Gunakan saat: flutter run -d ios
