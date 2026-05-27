@@ -74,11 +74,7 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
     final kodeMkController = TextEditingController();
     final sksController = TextEditingController();
     final semesterController = TextEditingController();
-    final jamMulaiController = TextEditingController();
-    final jamSelesaiController = TextEditingController();
-    final ruanganController = TextEditingController();
     int? selectedDosenId;
-    String? selectedHari;
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -278,187 +274,6 @@ class _ManageMataKuliahScreenState extends State<ManageMataKuliahScreen> {
                       return null;
                     },
                   ),
-const SizedBox(height: 16),
-                  // Dropdown Hari
-                  DropdownButtonFormField<String>(
-                    value: selectedHari,
-                    dropdownColor: isDark
-                        ? const Color(0xFF374151)
-                        : Colors.white,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF1F2937),
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Hari',
-                      hintText: 'Pilih hari kuliah',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      labelStyle: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF374151)
-                              : const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
-                      ),
-                    ),
-                    items: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-                        .map((hari) => DropdownMenuItem<String>(
-                              value: hari.toLowerCase(),
-                              child: Text(hari),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedHari = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Time Picker - Jam Mulai
-                  TextFormField(
-                    controller: jamMulaiController,
-                    readOnly: true,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF1F2937),
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Jam Mulai',
-                      hintText: 'Pilih jam mulai',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      labelStyle: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      suffixIcon: Icon(
-                        Icons.access_time_rounded,
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF374151)
-                              : const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
-                      ),
-                    ),
-                    onTap: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (time != null) {
-                        jamMulaiController.text =
-                            '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Time Picker - Jam Selesai
-                  TextFormField(
-                    controller: jamSelesaiController,
-                    readOnly: true,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF1F2937),
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Jam Selesai',
-                      hintText: 'Pilih jam selesai',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      labelStyle: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      suffixIcon: Icon(
-                        Icons.access_time_rounded,
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF374151)
-                              : const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
-                      ),
-                    ),
-                    onTap: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (time != null) {
-                        jamSelesaiController.text =
-                            '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Ruangan
-                  TextFormField(
-                    controller: ruanganController,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF1F2937),
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Ruangan',
-                      hintText: 'Contoh: Lab Komputer 3',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      labelStyle: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF374151)
-                              : const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
-                      ),
-                    ),
-                  ),
-
                 ],
               ),
             ),
@@ -486,16 +301,6 @@ const SizedBox(height: 16),
                       'sks': int.parse(sksController.text),
                       'semester': semesterController.text,
                       'dosen_id': selectedDosenId,
-                      'hari': selectedHari,
-                      'jam_mulai': jamMulaiController.text.isNotEmpty
-                          ? jamMulaiController.text
-                          : null,
-                      'jam_selesai': jamSelesaiController.text.isNotEmpty
-                          ? jamSelesaiController.text
-                          : null,
-                      'ruangan': ruanganController.text.isNotEmpty
-                          ? ruanganController.text
-                          : null,
                     });
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -541,17 +346,7 @@ const SizedBox(height: 16),
     final semesterController = TextEditingController(
       text: mataKuliah['semester'] ?? '',
     );
-    final jamMulaiController = TextEditingController(
-      text: mataKuliah['jam_mulai'] ?? '',
-    );
-    final jamSelesaiController = TextEditingController(
-      text: mataKuliah['jam_selesai'] ?? '',
-    );
-    final ruanganController = TextEditingController(
-      text: mataKuliah['ruangan'] ?? '',
-    );
     int? selectedDosenId = mataKuliah['dosen_id'];
-    String? selectedHari = mataKuliah['hari'];
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -751,187 +546,6 @@ const SizedBox(height: 16),
                       return null;
                     },
                   ),
-const SizedBox(height: 16),
-                  // Dropdown Hari
-                  DropdownButtonFormField<String>(
-                    value: selectedHari,
-                    dropdownColor: isDark
-                        ? const Color(0xFF374151)
-                        : Colors.white,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF1F2937),
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Hari',
-                      hintText: 'Pilih hari kuliah',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      labelStyle: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF374151)
-                              : const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
-                      ),
-                    ),
-                    items: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-                        .map((hari) => DropdownMenuItem<String>(
-                              value: hari.toLowerCase(),
-                              child: Text(hari),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedHari = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Time Picker - Jam Mulai
-                  TextFormField(
-                    controller: jamMulaiController,
-                    readOnly: true,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF1F2937),
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Jam Mulai',
-                      hintText: 'Pilih jam mulai',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      labelStyle: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      suffixIcon: Icon(
-                        Icons.access_time_rounded,
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF374151)
-                              : const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
-                      ),
-                    ),
-                    onTap: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (time != null) {
-                        jamMulaiController.text =
-                            '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Time Picker - Jam Selesai
-                  TextFormField(
-                    controller: jamSelesaiController,
-                    readOnly: true,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF1F2937),
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Jam Selesai',
-                      hintText: 'Pilih jam selesai',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      labelStyle: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      suffixIcon: Icon(
-                        Icons.access_time_rounded,
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF374151)
-                              : const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
-                      ),
-                    ),
-                    onTap: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (time != null) {
-                        jamSelesaiController.text =
-                            '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Ruangan
-                  TextFormField(
-                    controller: ruanganController,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF1F2937),
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Ruangan',
-                      hintText: 'Contoh: Lab Komputer 3',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      labelStyle: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF374151)
-                              : const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFF59E0B)),
-                      ),
-                    ),
-                  ),
-
                 ],
               ),
             ),
@@ -960,16 +574,6 @@ const SizedBox(height: 16),
                           'sks': int.parse(sksController.text),
                           'semester': semesterController.text,
                           'dosen_id': selectedDosenId,
-                          'hari': selectedHari,
-                          'jam_mulai': jamMulaiController.text.isNotEmpty
-                              ? jamMulaiController.text
-                              : null,
-                          'jam_selesai': jamSelesaiController.text.isNotEmpty
-                              ? jamSelesaiController.text
-                              : null,
-                          'ruangan': ruanganController.text.isNotEmpty
-                              ? ruanganController.text
-                              : null,
                         });
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1105,29 +709,6 @@ const SizedBox(height: 16),
             ),
             _buildDetailRow('Semester', mataKuliah['semester'] ?? '-', isDark),
             _buildDetailRow('Dosen', dosen['nama'] ?? '-', isDark),
-            _buildDetailRow(
-              'Hari',
-              mataKuliah['hari'] != null
-                  ? mataKuliah['hari'][0].toUpperCase() +
-                        mataKuliah['hari'].substring(1)
-                  : '-',
-              isDark,
-            ),
-            _buildDetailRow(
-              'Jam Mulai',
-              mataKuliah['jam_mulai'] != null
-                  ? mataKuliah['jam_mulai'].substring(0, 5)
-                  : '-',
-              isDark,
-            ),
-            _buildDetailRow(
-              'Jam Selesai',
-              mataKuliah['jam_selesai'] != null
-                  ? mataKuliah['jam_selesai'].substring(0, 5)
-                  : '-',
-              isDark,
-            ),
-            _buildDetailRow('Ruangan', mataKuliah['ruangan'] ?? '-', isDark),
           ],
         ),
       ),

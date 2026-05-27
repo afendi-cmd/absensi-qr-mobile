@@ -64,4 +64,42 @@ class UserService {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
+
+  // Update profile (self update)
+  Future<Map<String, dynamic>> updateProfile(
+    Map<String, dynamic> profileData,
+  ) async {
+    try {
+      final response = await _apiService.put('/profile/update', profileData);
+
+      if (response['success'] == true) {
+        return response['data'];
+      } else {
+        throw Exception(response['message'] ?? 'Gagal mengupdate profil');
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // Change password
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    try {
+      final response = await _apiService.put('/profile/update', {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'new_password_confirmation': newPasswordConfirmation,
+      });
+
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Gagal mengubah password');
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
 }

@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
+import 'qr_scanner_screen.dart';
+import 'schedule_screen.dart';
+import 'history_screen.dart';
+import 'profile_screen.dart';
 
 class MahasiswaDashboardScreen extends StatefulWidget {
   const MahasiswaDashboardScreen({super.key});
@@ -471,15 +475,15 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
   }
 
   Widget _buildScheduleContent() {
-    return const Center(child: Text('Jadwal Screen'));
+    return const ScheduleScreen();
   }
 
   Widget _buildHistoryContent() {
-    return const Center(child: Text('Riwayat Screen'));
+    return const HistoryScreen();
   }
 
   Widget _buildProfileContent() {
-    return const Center(child: Text('Profil Screen'));
+    return const ProfileScreen();
   }
 
   Widget _buildBottomNav() {
@@ -561,15 +565,42 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
   }
 
   Widget _buildScanQrFab() {
-    return FloatingActionButton(
-      onPressed: () {
-        // TODO: Navigate to QR Scanner
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Scan QR akan segera hadir')),
+    return FloatingActionButton.extended(
+      onPressed: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const QrScannerScreen()),
         );
+
+        // Reload stats if absensi successful
+        if (result == true && mounted) {
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+          final dashboardProvider = Provider.of<DashboardProvider>(
+            context,
+            listen: false,
+          );
+
+          if (authProvider.user != null) {
+            dashboardProvider.loadMahasiswaStats(authProvider.user!.id);
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Absensi berhasil! Data diperbarui.'),
+              backgroundColor: Color(0xFF10B981),
+            ),
+          );
+        }
       },
       backgroundColor: const Color(0xFF003d9b),
-      child: const Icon(Icons.qr_code_scanner, color: Colors.white),
+      icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+      label: const Text(
+        'Scan QR',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

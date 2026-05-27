@@ -17,6 +17,10 @@ class MataKuliah extends Model
         'sks',
         'semester',
         'dosen_id',
+        'hari',
+        'jam_mulai',
+        'jam_selesai',
+        'ruangan',
     ];
 
     // Relasi

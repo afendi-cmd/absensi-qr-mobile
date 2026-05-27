@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 import '../../providers/theme_provider.dart';
 import '../../data/services/absensi_service.dart';
 import '../../data/services/matakuliah_service.dart';
+import '../../data/services/storage_service.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -13,8 +15,8 @@ class StatisticsScreen extends StatefulWidget {
 }
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
-  final AbsensiService _absensiService = AbsensiService();
-  final MataKuliahService _mataKuliahService = MataKuliahService();
+  late AbsensiService _absensiService;
+  late MataKuliahService _mataKuliahService;
 
   String _selectedPeriod = 'Bulan Ini';
   bool _isLoading = false;
@@ -26,6 +28,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    final storageService = StorageService();
+    final token = await storageService.getToken();
+
+    final dio = Dio();
+    dio.options.headers['Authorization'] = 'Bearer $token';
+    dio.options.headers['Accept'] = 'application/json';
+
+    _absensiService = AbsensiService(dio);
+    _mataKuliahService = MataKuliahService();
+
     _loadData();
   }
 

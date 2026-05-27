@@ -2,25 +2,27 @@ class AbsensiModel {
   final int id;
   final int mahasiswaId;
   final int mataKuliahId;
-  final int qrSessionId;
+  final int? qrSessionId;
+  final String tanggal;
+  final String jam;
   final String status;
-  final DateTime waktuAbsen;
-  final String? mahasiswaName;
-  final String? mahasiswaNim;
-  final String? mataKuliahName;
-  final String? keterangan;
+  final double? latitude;
+  final double? longitude;
+  final String? createdAt;
+  final MataKuliahAbsensi? mataKuliah;
 
   AbsensiModel({
     required this.id,
     required this.mahasiswaId,
     required this.mataKuliahId,
-    required this.qrSessionId,
+    this.qrSessionId,
+    required this.tanggal,
+    required this.jam,
     required this.status,
-    required this.waktuAbsen,
-    this.mahasiswaName,
-    this.mahasiswaNim,
-    this.mataKuliahName,
-    this.keterangan,
+    this.latitude,
+    this.longitude,
+    this.createdAt,
+    this.mataKuliah,
   });
 
   factory AbsensiModel.fromJson(Map<String, dynamic> json) {
@@ -28,16 +30,20 @@ class AbsensiModel {
       id: json['id'] ?? 0,
       mahasiswaId: json['mahasiswa_id'] ?? 0,
       mataKuliahId: json['mata_kuliah_id'] ?? 0,
-      qrSessionId: json['qr_session_id'] ?? 0,
+      qrSessionId: json['qr_session_id'],
+      tanggal: json['tanggal'] ?? '',
+      jam: json['jam'] ?? '',
       status: json['status'] ?? 'hadir',
-      waktuAbsen: json['waktu_absen'] != null
-          ? DateTime.parse(json['waktu_absen'])
-          : DateTime.now(),
-      mahasiswaName: json['mahasiswa_name'] ?? json['mahasiswa']?['name'],
-      mahasiswaNim: json['mahasiswa_nim'] ?? json['mahasiswa']?['nim'],
-      mataKuliahName:
-          json['mata_kuliah_name'] ?? json['mata_kuliah']?['nama_mk'],
-      keterangan: json['keterangan'],
+      latitude: json['latitude'] != null
+          ? double.tryParse(json['latitude'].toString())
+          : null,
+      longitude: json['longitude'] != null
+          ? double.tryParse(json['longitude'].toString())
+          : null,
+      createdAt: json['created_at'],
+      mataKuliah: json['mata_kuliah'] != null
+          ? MataKuliahAbsensi.fromJson(json['mata_kuliah'])
+          : null,
     );
   }
 
@@ -47,17 +53,85 @@ class AbsensiModel {
       'mahasiswa_id': mahasiswaId,
       'mata_kuliah_id': mataKuliahId,
       'qr_session_id': qrSessionId,
+      'tanggal': tanggal,
+      'jam': jam,
       'status': status,
-      'waktu_absen': waktuAbsen.toIso8601String(),
-      'mahasiswa_name': mahasiswaName,
-      'mahasiswa_nim': mahasiswaNim,
-      'mata_kuliah_name': mataKuliahName,
-      'keterangan': keterangan,
+      'latitude': latitude,
+      'longitude': longitude,
+      'created_at': createdAt,
+      'mata_kuliah': mataKuliah?.toJson(),
     };
   }
 
-  bool get isHadir => status.toLowerCase() == 'hadir';
-  bool get isAlfa => status.toLowerCase() == 'alfa';
-  bool get isIzin => status.toLowerCase() == 'izin';
-  bool get isSakit => status.toLowerCase() == 'sakit';
+  String get formattedDate {
+    try {
+      final date = DateTime.parse(tanggal);
+      final months = [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+      return '${date.day} ${months[date.month]} ${date.year}';
+    } catch (e) {
+      return tanggal;
+    }
+  }
+
+  String get formattedTime {
+    try {
+      // Format: HH:mm:ss to HH:mm
+      return jam.substring(0, 5);
+    } catch (e) {
+      return jam;
+    }
+  }
+
+  String get statusLabel {
+    switch (status.toLowerCase()) {
+      case 'hadir':
+        return 'Hadir';
+      case 'izin':
+        return 'Izin';
+      case 'sakit':
+        return 'Sakit';
+      case 'alpha':
+        return 'Alpha';
+      default:
+        return status;
+    }
+  }
+}
+
+class MataKuliahAbsensi {
+  final int id;
+  final String namaMk;
+  final String kodeMk;
+
+  MataKuliahAbsensi({
+    required this.id,
+    required this.namaMk,
+    required this.kodeMk,
+  });
+
+  factory MataKuliahAbsensi.fromJson(Map<String, dynamic> json) {
+    return MataKuliahAbsensi(
+      id: json['id'] ?? 0,
+      namaMk: json['nama_mk'] ?? '',
+      kodeMk: json['kode_mk'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'nama_mk': namaMk, 'kode_mk': kodeMk};
+  }
 }

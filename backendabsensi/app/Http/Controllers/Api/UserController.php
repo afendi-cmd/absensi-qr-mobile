@@ -208,7 +208,7 @@ class UserController extends Controller
         $user = $request->user();
 
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:100',
+            'nama' => 'sometimes|required|string|max:100',
             'email' => 'sometimes|required|email|unique:users,email,' . $user->id . '|max:100',
             'no_hp' => 'sometimes|nullable|string|max:20',
             'alamat' => 'sometimes|nullable|string',
@@ -236,8 +236,8 @@ class UserController extends Controller
         }
 
         // Update other fields
-        if ($request->has('name')) {
-            $user->name = $request->name;
+        if ($request->has('nama')) {
+            $user->nama = $request->nama;
         }
         if ($request->has('email')) {
             $user->email = $request->email;

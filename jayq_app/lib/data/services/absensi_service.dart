@@ -1,88 +1,98 @@
-import 'api_service.dart';
+import 'package:dio/dio.dart';
+import '../../core/constants/app_constants.dart';
 
 class AbsensiService {
-  final ApiService _apiService = ApiService();
+  final Dio _dio;
 
-  // Get rekap absensi dengan filter
-  Future<Map<String, dynamic>> getRekapAbsensi({
-    int? mataKuliahId,
-    String? tanggalMulai,
-    String? tanggalSelesai,
-  }) async {
+  AbsensiService(this._dio);
+
+  // Scan QR untuk absensi
+  Future<Map<String, dynamic>> scanQr(String qrCode) async {
     try {
-      var endpoint = '/rekap-absensi?';
-      if (mataKuliahId != null) {
-        endpoint += 'mata_kuliah_id=$mataKuliahId&';
-      }
-      if (tanggalMulai != null) {
-        endpoint += 'tanggal_mulai=$tanggalMulai&';
-      }
-      if (tanggalSelesai != null) {
-        endpoint += 'tanggal_selesai=$tanggalSelesai&';
-      }
-
-      final response = await _apiService.get(endpoint);
-
-      if (response['success'] == true) {
-        return response['data'];
-      } else {
-        throw Exception(response['message'] ?? 'Gagal memuat rekap absensi');
-      }
-    } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
-    }
-  }
-
-  // Get all absensi dengan filter
-  Future<List<Map<String, dynamic>>> getAllAbsensi({
-    int? mataKuliahId,
-    int? mahasiswaId,
-    String? tanggalMulai,
-    String? tanggalSelesai,
-  }) async {
-    try {
-      var endpoint = '/absensi/all?';
-      if (mataKuliahId != null) {
-        endpoint += 'mata_kuliah_id=$mataKuliahId&';
-      }
-      if (mahasiswaId != null) {
-        endpoint += 'mahasiswa_id=$mahasiswaId&';
-      }
-      if (tanggalMulai != null) {
-        endpoint += 'tanggal_mulai=$tanggalMulai&';
-      }
-      if (tanggalSelesai != null) {
-        endpoint += 'tanggal_selesai=$tanggalSelesai&';
-      }
-
-      final response = await _apiService.get(endpoint);
-
-      if (response['success'] == true) {
-        return List<Map<String, dynamic>>.from(response['data']);
-      } else {
-        throw Exception(response['message'] ?? 'Gagal memuat data absensi');
-      }
-    } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
-    }
-  }
-
-  // Get absensi by mata kuliah
-  Future<List<Map<String, dynamic>>> getAbsensiByMataKuliah(
-    int mataKuliahId,
-  ) async {
-    try {
-      final response = await _apiService.get(
-        '/mata-kuliah/$mataKuliahId/absensi',
+      final response = await _dio.post(
+        '${AppConstants.baseUrl}/scan-qr',
+        data: {'qr_code': qrCode},
       );
 
-      if (response['success'] == true) {
-        return List<Map<String, dynamic>>.from(response['data']);
+      if (response.data['success']) {
+        return response.data;
       } else {
-        throw Exception(response['message'] ?? 'Gagal memuat data absensi');
+        throw Exception(response.data['message'] ?? 'Gagal melakukan absensi');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final message =
+            e.response!.data['message'] ?? 'Gagal melakukan absensi';
+        throw Exception(message);
+      } else {
+        throw Exception('Koneksi bermasalah. Cek internet Anda.');
       }
     } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+      throw Exception('Terjadi kesalahan: ${e.toString()}');
+    }
+  }
+
+  // Get riwayat absensi mahasiswa
+  Future<List<Map<String, dynamic>>> getRiwayatAbsensi({
+    int? mataKuliahId,
+    String? tanggalMulai,
+    String? tanggalSelesai,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (mataKuliahId != null) {
+        queryParams['mata_kuliah_id'] = mataKuliahId;
+      }
+      if (tanggalMulai != null) {
+        queryParams['tanggal_mulai'] = tanggalMulai;
+      }
+      if (tanggalSelesai != null) {
+        queryParams['tanggal_selesai'] = tanggalSelesai;
+      }
+
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/riwayat-absensi',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+
+      if (response.data['success']) {
+        List<dynamic> data = response.data['data'];
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception(response.data['message']);
+      }
+    } catch (e) {
+      throw Exception('Gagal mengambil riwayat absensi: $e');
+    }
+  }
+
+  // Get all absensi (for admin)
+  Future<List<Map<String, dynamic>>> getAllAbsensi({
+    String? tanggalMulai,
+    String? tanggalSelesai,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (tanggalMulai != null) {
+        queryParams['tanggal_mulai'] = tanggalMulai;
+      }
+      if (tanggalSelesai != null) {
+        queryParams['tanggal_selesai'] = tanggalSelesai;
+      }
+
+      final response = await _dio.get(
+        '${AppConstants.baseUrl}/absensi/all',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+
+      if (response.data['success']) {
+        List<dynamic> data = response.data['data'];
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception(response.data['message']);
+      }
+    } catch (e) {
+      throw Exception('Gagal mengambil data absensi: $e');
     }
   }
 }
