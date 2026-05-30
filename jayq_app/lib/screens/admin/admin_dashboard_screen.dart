@@ -53,15 +53,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     dio.options.headers['Authorization'] = 'Bearer $token';
     dio.options.headers['Accept'] = 'application/json';
 
-    _pengumumanService = PengumumanService(dio);
+    _pengumumanService = PengumumanService();
     _loadNotificationCount();
   }
 
   Future<void> _loadNotificationCount() async {
     try {
-      final unreadCount = await _pengumumanService.getUnreadCount();
+      final data = await _pengumumanService.getUnreadCount();
       setState(() {
-        _notificationCount = unreadCount;
+        _notificationCount = data['unread_count'] ?? 0;
       });
     } catch (e) {
       // Silently fail
@@ -581,7 +581,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final List<Map<String, dynamic>> allActions = [
       {
         'icon': Icons.person_add_alt,
-        'label': 'Kelola\nDosen',
+        'label': 'Kelola Dosen',
         'onTap': () => Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const ManageDosenScreen()),
@@ -589,7 +589,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       },
       {
         'icon': Icons.group_add,
-        'label': 'Kelola\nMhs',
+        'label': 'Kelola Mhs',
         'onTap': () => Navigator.push(
           context,
           MaterialPageRoute(
@@ -599,7 +599,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       },
       {
         'icon': Icons.library_books,
-        'label': 'Kelola\nMatkul',
+        'label': 'Mata Kuliah',
         'onTap': () => Navigator.push(
           context,
           MaterialPageRoute(
@@ -609,7 +609,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       },
       {
         'icon': Icons.groups,
-        'label': 'Kelola\nPeserta',
+        'label': 'Kelola Peserta',
         'onTap': () => Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const ManagePesertaScreen()),
@@ -627,12 +627,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       },
       {
         'icon': Icons.download,
-        'label': 'Export\nData',
+        'label': 'Export Data',
         'onTap': () => Navigator.pushNamed(context, '/admin/export'),
       },
       {
         'icon': Icons.assessment,
-        'label': 'Laporan\nPresensi',
+        'label': 'Laporan',
         'onTap': () => Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const StatisticsScreen()),
@@ -640,7 +640,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       },
       {
         'icon': Icons.bar_chart,
-        'label': 'Statistik\nLanjutan',
+        'label': 'Statistik',
         'onTap': () => Navigator.push(
           context,
           MaterialPageRoute(
@@ -712,7 +712,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             crossAxisCount: 4,
             crossAxisSpacing: 12,
             mainAxisSpacing: 16,
-            childAspectRatio: 0.85,
+            childAspectRatio: 0.95,
           ),
           itemCount: displayedActions.length,
           itemBuilder: (context, index) {
@@ -740,13 +740,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       borderRadius: BorderRadius.circular(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFF1E40AF),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
                   color:
@@ -759,19 +760,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ],
             ),
-            child: Icon(icon, color: Colors.white, size: 26),
+            child: Icon(icon, color: Colors.white, size: 25),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             label,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 10.5,
               fontWeight: FontWeight.w500,
               color: isDark ? Colors.white : const Color(0xFF111827),
-              height: 1.2,
+              height: 1.15,
             ),
           ),
         ],

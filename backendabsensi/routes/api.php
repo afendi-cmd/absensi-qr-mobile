@@ -67,7 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/pengumuman', [PengumumanController::class, 'store']);
         Route::put('/pengumuman/{id}', [PengumumanController::class, 'update']);
         Route::delete('/pengumuman/{id}', [PengumumanController::class, 'destroy']);
-        Route::post('/pengumuman/{id}/toggle-active', [PengumumanController::class, 'toggleActive']);
+        Route::post('/pengumuman/{id}/toggle', [PengumumanController::class, 'toggleActive']);
 
         // Notification Management
         Route::post('/notifications/send', [NotificationController::class, 'sendToUsers']);

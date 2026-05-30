@@ -55,8 +55,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
 
     try {
-      // Load mata kuliah for filter
-      final mataKuliah = await _mataKuliahService.getMataKuliah();
+      // Load mata kuliah mahasiswa for filter
+      final mataKuliah = await _mataKuliahService.getMahasiswaMataKuliah();
 
       // Load absensi with filters
       final absensiData = await _absensiService.getRiwayatAbsensi(

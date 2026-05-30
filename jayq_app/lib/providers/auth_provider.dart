@@ -63,11 +63,15 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // Try to logout from server
       await _authService.logout();
-      _user = null;
     } catch (e) {
+      // Even if server logout fails, we still clear local data
       _errorMessage = e.toString();
+      debugPrint('Server logout failed: $e');
     } finally {
+      // Always clear local user data and token
+      _user = null;
       _isLoading = false;
       notifyListeners();
     }

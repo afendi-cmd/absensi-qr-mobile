@@ -475,7 +475,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
   Future<void> _handleLogout() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         final themeProvider = Provider.of<ThemeProvider>(context);
         final isDark = themeProvider.isDarkMode;
 
@@ -498,7 +498,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: Text(
                 'Batal',
                 style: TextStyle(
@@ -509,7 +509,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
               ),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(dialogContext, true),
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFFEF4444),
               ),
@@ -521,10 +521,20 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     );
 
     if (confirmed == true && mounted) {
+      // Save navigator before async operation
+      final navigator = Navigator.of(context);
+
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.logout();
+
+      try {
+        await authProvider.logout();
+      } catch (e) {
+        // Even if logout fails, continue to login screen
+        debugPrint('Logout error (ignored): $e');
+      }
+
       if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.login);
+        navigator.pushReplacementNamed(AppRoutes.login);
       }
     }
   }

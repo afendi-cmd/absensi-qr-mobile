@@ -4,9 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import '../../providers/theme_provider.dart';
 import '../../data/services/pengumuman_service.dart';
-import '../../data/services/storage_service.dart';
 import '../../data/services/notification_service.dart';
-import 'package:dio/dio.dart';
 
 class BroadcastPengumumanScreen extends StatefulWidget {
   const BroadcastPengumumanScreen({super.key});
@@ -34,14 +32,7 @@ class _BroadcastPengumumanScreenState extends State<BroadcastPengumumanScreen> {
   }
 
   Future<void> _initializeService() async {
-    final storageService = StorageService();
-    final token = await storageService.getToken();
-
-    final dio = Dio();
-    dio.options.headers['Authorization'] = 'Bearer $token';
-    dio.options.headers['Accept'] = 'application/json';
-
-    _pengumumanService = PengumumanService(dio);
+    _pengumumanService = PengumumanService();
   }
 
   @override
@@ -90,12 +81,12 @@ class _BroadcastPengumumanScreenState extends State<BroadcastPengumumanScreen> {
 
     try {
       // Create pengumuman
-      await _pengumumanService.createPengumuman(
-        judul: 'Broadcast Pengumuman',
-        isi: _isiController.text.trim(),
-        tipe: 'info',
-        target: _selectedTarget,
-      );
+      await _pengumumanService.createPengumuman({
+        'judul': 'Broadcast Pengumuman',
+        'isi': _isiController.text.trim(),
+        'tipe': 'info',
+        'target': _selectedTarget,
+      });
 
       // Send push notification
       String targetText = _selectedTarget == 'all'

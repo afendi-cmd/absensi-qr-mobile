@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
-import '../../data/services/schedule_service.dart';
-import '../../data/services/storage_service.dart';
-import '../../data/models/schedule_model.dart';
-import 'package:dio/dio.dart';
+import '../../data/services/matakuliah_service.dart';
+import 'qr_scanner_screen.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -13,49 +11,38 @@ class ScheduleScreen extends StatefulWidget {
   State<ScheduleScreen> createState() => _ScheduleScreenState();
 }
 
-class _ScheduleScreenState extends State<ScheduleScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  late ScheduleService _scheduleService;
-
+class _ScheduleScreenState extends State<ScheduleScreen> {
+  final _mataKuliahService = MataKuliahService();
   bool _isLoading = false;
   String _errorMessage = '';
-  List<ScheduleModel> _allSchedules = [];
-  Map<String, List<ScheduleModel>> _groupedSchedules = {};
+  Map<String, List<Map<String, dynamic>>> _groupedSchedules = {};
+  int _selectedDayIndex = 0;
 
-  final List<String> _days = [
-    'Senin',
-    'Selasa',
-    'Rabu',
-    'Kamis',
-    'Jumat',
-    'Sabtu',
-  ];
+  final List<Map<String, dynamic>> _weekDays = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _days.length, vsync: this);
-    _initializeService();
-
-    // Set tab to today
-    final today = DateTime.now().weekday;
-    if (today >= 1 && today <= 6) {
-      _tabController.index = today - 1;
-    }
+    _generateWeekDays();
+    _loadSchedule();
   }
 
-  Future<void> _initializeService() async {
-    final storageService = StorageService();
-    final token = await storageService.getToken();
+  void _generateWeekDays() {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
 
-    final dio = Dio();
-    dio.options.baseUrl = 'http://10.0.2.2:8000/api';
-    dio.options.headers['Authorization'] = 'Bearer $token';
-    dio.options.headers['Accept'] = 'application/json';
+    final dayNames = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
 
-    _scheduleService = ScheduleService(dio);
-    _loadSchedule();
+    for (int i = 0; i < 6; i++) {
+      final date = monday.add(Duration(days: i));
+      _weekDays.add({'name': dayNames[i], 'date': date.day, 'fullDate': date});
+    }
+
+    // Set selected to today
+    _selectedDayIndex = now.weekday - 1;
+    if (_selectedDayIndex < 0 || _selectedDayIndex > 5) {
+      _selectedDayIndex = 0;
+    }
   }
 
   Future<void> _loadSchedule() async {
@@ -65,11 +52,10 @@ class _ScheduleScreenState extends State<ScheduleScreen>
     });
 
     try {
-      final schedules = await _scheduleService.getMahasiswaSchedule();
-      final grouped = _scheduleService.groupScheduleByDay(schedules);
+      final mataKuliahList = await _mataKuliahService.getMahasiswaMataKuliah();
+      final grouped = _groupScheduleByDay(mataKuliahList);
 
       setState(() {
-        _allSchedules = schedules;
         _groupedSchedules = grouped;
         _isLoading = false;
       });
@@ -81,10 +67,107 @@ class _ScheduleScreenState extends State<ScheduleScreen>
     }
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  Map<String, List<Map<String, dynamic>>> _groupScheduleByDay(
+    List<Map<String, dynamic>> mataKuliahList,
+  ) {
+    final Map<String, List<Map<String, dynamic>>> grouped = {
+      'senin': [],
+      'selasa': [],
+      'rabu': [],
+      'kamis': [],
+      'jumat': [],
+      'sabtu': [],
+    };
+
+    for (final mk in mataKuliahList) {
+      final hari = mk['hari']?.toString().toLowerCase();
+      if (hari != null && grouped.containsKey(hari)) {
+        grouped[hari]!.add(mk);
+      }
+    }
+
+    // Sort by jam_mulai
+    for (final key in grouped.keys) {
+      grouped[key]!.sort((a, b) {
+        final jamMulaiA = a['jam_mulai']?.toString() ?? '00:00';
+        final jamMulaiB = b['jam_mulai']?.toString() ?? '00:00';
+        return jamMulaiA.compareTo(jamMulaiB);
+      });
+    }
+
+    return grouped;
+  }
+
+  String _getStatusForSchedule(Map<String, dynamic> schedule) {
+    final now = DateTime.now();
+    final currentTime = TimeOfDay.now();
+
+    // Check if schedule has time data
+    final jamMulai = schedule['jam_mulai']?.toString();
+    final jamSelesai = schedule['jam_selesai']?.toString();
+
+    if (jamMulai == null || jamSelesai == null) {
+      return 'Belum Mulai';
+    }
+
+    // Parse jam_mulai and jam_selesai
+    final startParts = jamMulai.split(':');
+    final endParts = jamSelesai.split(':');
+
+    final startTime = TimeOfDay(
+      hour: int.parse(startParts[0]),
+      minute: int.parse(startParts[1]),
+    );
+    final endTime = TimeOfDay(
+      hour: int.parse(endParts[0]),
+      minute: int.parse(endParts[1]),
+    );
+
+    final currentMinutes = currentTime.hour * 60 + currentTime.minute;
+    final startMinutes = startTime.hour * 60 + startTime.minute;
+    final endMinutes = endTime.hour * 60 + endTime.minute;
+
+    // Check if today matches schedule day
+    final dayNames = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+    final todayName = dayNames[now.weekday - 1];
+
+    if (schedule['hari']?.toString().toLowerCase() != todayName) {
+      return 'Belum Mulai';
+    }
+
+    if (currentMinutes < startMinutes) {
+      return 'Belum Mulai';
+    } else if (currentMinutes >= startMinutes && currentMinutes <= endMinutes) {
+      return 'Berlangsung';
+    } else {
+      return 'Selesai';
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Selesai':
+        return const Color(0xFF10B981);
+      case 'Berlangsung':
+        return const Color(0xFF003d9b);
+      case 'Belum Mulai':
+        return const Color(0xFF6B7280);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  Color _getStatusBgColor(String status) {
+    switch (status) {
+      case 'Selesai':
+        return const Color(0xFFD1FAE5);
+      case 'Berlangsung':
+        return const Color(0xFFDCE9FF);
+      case 'Belum Mulai':
+        return const Color(0xFFF3F4F6);
+      default:
+        return const Color(0xFFF3F4F6);
+    }
   }
 
   @override
@@ -99,14 +182,14 @@ class _ScheduleScreenState extends State<ScheduleScreen>
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(isDark),
-            _buildTabBar(isDark),
+            _buildHeader(),
+            _buildDaySelector(),
             Expanded(
               child: _isLoading
                   ? _buildLoadingState()
                   : _errorMessage.isNotEmpty
-                  ? _buildErrorState(isDark)
-                  : _buildScheduleContent(isDark),
+                  ? _buildErrorState()
+                  : _buildScheduleList(),
             ),
           ],
         ),
@@ -114,58 +197,126 @@ class _ScheduleScreenState extends State<ScheduleScreen>
     );
   }
 
-  Widget _buildHeader(bool isDark) {
+  Widget _buildHeader() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Container(
       padding: const EdgeInsets.all(16),
       color: isDark ? const Color(0xFF1F2937) : Colors.white,
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.calendar_today_rounded,
-            color: Color(0xFF003d9b),
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'Jadwal Kuliah',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_today,
                 color: Color(0xFF003d9b),
+                size: 24,
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Jadwal Kuliah',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF191c1e),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.notifications_outlined,
+                  color: isDark ? Colors.white : const Color(0xFF003d9b),
+                ),
+                onPressed: () {},
+              ),
+            ],
           ),
-          IconButton(
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: isDark ? Colors.white : const Color(0xFF003d9b),
+          const SizedBox(height: 4),
+          Text(
+            'Satu semester, satu genggaman.',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF737685),
             ),
-            onPressed: _loadSchedule,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTabBar(bool isDark) {
+  Widget _buildDaySelector() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Container(
+      height: 90,
       color: isDark ? const Color(0xFF1F2937) : Colors.white,
-      child: TabBar(
-        controller: _tabController,
-        isScrollable: true,
-        indicatorColor: const Color(0xFF003d9b),
-        indicatorWeight: 3,
-        labelColor: const Color(0xFF003d9b),
-        unselectedLabelColor: isDark
-            ? const Color(0xFF9CA3AF)
-            : const Color(0xFF6B7280),
-        labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-        tabs: _days.map((day) => Tab(text: day)).toList(),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: _weekDays.length,
+        itemBuilder: (context, index) {
+          final day = _weekDays[index];
+          final isSelected = index == _selectedDayIndex;
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedDayIndex = index;
+              });
+            },
+            child: Container(
+              width: 60,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF003d9b)
+                    : (isDark ? const Color(0xFF374151) : Colors.white),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFF003d9b)
+                      : (isDark
+                            ? const Color(0xFF4B5563)
+                            : const Color(0xFFE1E2E4)),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    day['name'],
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark
+                                ? const Color(0xFF9CA3AF)
+                                : const Color(0xFF737685)),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${day['date']}',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark ? Colors.white : const Color(0xFF191c1e)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -178,7 +329,10 @@ class _ScheduleScreenState extends State<ScheduleScreen>
     );
   }
 
-  Widget _buildErrorState(bool isDark) {
+  Widget _buildErrorState() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -186,7 +340,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.error_outline_rounded,
+              Icons.error_outline,
               size: 64,
               color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
             ),
@@ -202,13 +356,8 @@ class _ScheduleScreenState extends State<ScheduleScreen>
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
+            ElevatedButton(
               onPressed: _loadSchedule,
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              label: const Text(
-                'Coba Lagi',
-                style: TextStyle(color: Colors.white),
-              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF003d9b),
                 padding: const EdgeInsets.symmetric(
@@ -219,6 +368,10 @@ class _ScheduleScreenState extends State<ScheduleScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              child: const Text(
+                'Coba Lagi',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -226,393 +379,264 @@ class _ScheduleScreenState extends State<ScheduleScreen>
     );
   }
 
-  Widget _buildScheduleContent(bool isDark) {
-    return TabBarView(
-      controller: _tabController,
-      children: _days.map((day) {
-        final dayKey = day.toLowerCase();
-        final schedules = _groupedSchedules[dayKey] ?? [];
+  Widget _buildScheduleList() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final dayNames = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+    final selectedDay = dayNames[_selectedDayIndex];
+    final schedules = _groupedSchedules[selectedDay] ?? [];
 
-        if (schedules.isEmpty) {
-          return _buildEmptyState(day, isDark);
-        }
+    if (schedules.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.calendar_today,
+              size: 80,
+              color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Tidak ada jadwal kuliah lainnya.',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF737685),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-        return RefreshIndicator(
-          onRefresh: _loadSchedule,
-          color: const Color(0xFF003d9b),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: schedules.length,
-            itemBuilder: (context, index) {
-              return _buildScheduleCard(schedules[index], isDark);
-            },
-          ),
-        );
-      }).toList(),
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: schedules.length,
+      itemBuilder: (context, index) {
+        final schedule = schedules[index];
+        final status = _getStatusForSchedule(schedule);
+        return _buildScheduleCard(schedule, status);
+      },
     );
   }
 
-  Widget _buildEmptyState(String day, bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.event_busy_rounded,
-            size: 80,
-            color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Tidak ada jadwal',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tidak ada mata kuliah di hari $day',
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildScheduleCard(Map<String, dynamic> schedule, String status) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final statusColor = _getStatusColor(status);
+    final statusBgColor = _getStatusBgColor(status);
+    final isBerlangsung = status == 'Berlangsung';
 
-  Widget _buildScheduleCard(ScheduleModel schedule, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+        color: isBerlangsung
+            ? (isDark ? const Color(0xFF1E3A8A) : const Color(0xFFDCE9FF))
+            : (isDark ? const Color(0xFF1F2937) : Colors.white),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+          color: isBerlangsung
+              ? const Color(0xFF003d9b)
+              : (isDark ? const Color(0xFF374151) : const Color(0xFFE1E2E4)),
+          width: isBerlangsung ? 2 : 1,
         ),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
+          if (isBerlangsung)
+            BoxShadow(
+              color: const Color(0xFF003d9b).withValues(alpha: 0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showScheduleDetail(schedule, isDark),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Time and Status
+            Row(
               children: [
-                // Time Badge
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF003d9b).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.access_time_rounded,
-                            size: 16,
-                            color: Color(0xFF003d9b),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            schedule.timeRange,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF003d9b),
-                            ),
-                          ),
-                        ],
-                      ),
+                Text(
+                  '${schedule['jam_mulai'] ?? '00:00'} - ${schedule['jam_selesai'] ?? '00:00'}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isBerlangsung
+                        ? const Color(0xFF003d9b)
+                        : const Color(0xFF191c1e),
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusBgColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Course Name
+            Text(
+              schedule['nama_mk'] ?? 'Mata Kuliah',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: isBerlangsung
+                    ? const Color(0xFF003d9b)
+                    : const Color(0xFF191c1e),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Lecturer
+            if (schedule['dosen'] != null)
+              Row(
+                children: [
+                  Icon(
+                    Icons.person_outline,
+                    size: 16,
+                    color: isBerlangsung
+                        ? const Color(0xFF003d9b)
+                        : const Color(0xFF737685),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    schedule['dosen']['nama'] ?? 'Dosen',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isBerlangsung
+                          ? const Color(0xFF003d9b)
+                          : const Color(0xFF737685),
+                    ),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 8),
+
+            // Location
+            if (schedule['ruangan'] != null)
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: isBerlangsung
+                        ? const Color(0xFF003d9b)
+                        : const Color(0xFF737685),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    schedule['ruangan'],
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isBerlangsung
+                          ? const Color(0xFF003d9b)
+                          : const Color(0xFF737685),
+                    ),
+                  ),
+                ],
+              ),
+
+            // Action Button
+            if (isBerlangsung) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const QrScannerScreen(),
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '${schedule.sks} SKS',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF10B981),
-                        ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF003d9b),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.qr_code_scanner, size: 20),
+                  label: const Text(
+                    'Scan Kehadiran',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ] else if (status == 'Selesai') ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    // Navigate to attendance history
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF003d9b),
+                    side: const BorderSide(color: Color(0xFF003d9b)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Lihat Presensi',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(
+                      Icons.lock_outline,
+                      size: 18,
+                      color: Color(0xFF6B7280),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Presensi Belum Dibuka',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF6B7280),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-
-                // Course Name
-                Text(
-                  schedule.namaMk,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 4),
-
-                // Course Code
-                Text(
-                  schedule.kodeMk,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF6B7280),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Location
-                if (schedule.ruangan != null) ...[
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        schedule.ruangan!,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDark
-                              ? const Color(0xFF9CA3AF)
-                              : const Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                ],
-
-                // Lecturer
-                if (schedule.dosen != null)
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline_rounded,
-                        size: 16,
-                        color: isDark
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          schedule.dosen!.nama,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark
-                                ? const Color(0xFF9CA3AF)
-                                : const Color(0xFF6B7280),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showScheduleDetail(ScheduleModel schedule, bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1F2937) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF374151)
-                      : const Color(0xFFE5E7EB),
-                  borderRadius: BorderRadius.circular(2),
-                ),
               ),
-            ),
-            const SizedBox(height: 24),
-
-            // Title
-            Text(
-              'Detail Jadwal',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF1F2937),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Course Info
-            _buildDetailRow(
-              Icons.book_rounded,
-              'Mata Kuliah',
-              schedule.namaMk,
-              isDark,
-            ),
-            _buildDetailRow(
-              Icons.tag_rounded,
-              'Kode MK',
-              schedule.kodeMk,
-              isDark,
-            ),
-            _buildDetailRow(
-              Icons.calendar_today_rounded,
-              'Hari',
-              schedule.hariCapitalized,
-              isDark,
-            ),
-            _buildDetailRow(
-              Icons.access_time_rounded,
-              'Waktu',
-              schedule.timeRange,
-              isDark,
-            ),
-            if (schedule.ruangan != null)
-              _buildDetailRow(
-                Icons.location_on_rounded,
-                'Ruangan',
-                schedule.ruangan!,
-                isDark,
-              ),
-            if (schedule.dosen != null)
-              _buildDetailRow(
-                Icons.person_rounded,
-                'Dosen',
-                schedule.dosen!.nama,
-                isDark,
-              ),
-            _buildDetailRow(
-              Icons.school_rounded,
-              'SKS',
-              '${schedule.sks} SKS',
-              isDark,
-            ),
-
-            const SizedBox(height: 24),
-
-            // Close Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF003d9b),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Tutup',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(
-    IconData icon,
-    String label,
-    String value,
-    bool isDark,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF003d9b).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 20, color: const Color(0xFF003d9b)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF6B7280),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import '../../data/models/pengumuman_model.dart';
 import '../../data/services/pengumuman_service.dart';
-import '../../data/services/storage_service.dart';
 import 'broadcast_pengumuman_screen.dart';
 
 class ManagePengumumanScreen extends StatefulWidget {
@@ -14,7 +12,7 @@ class ManagePengumumanScreen extends StatefulWidget {
 
 class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
   late PengumumanService _pengumumanService;
-  List<Pengumuman> _pengumumanList = [];
+  List<PengumumanModel> _pengumumanList = [];
   bool _isLoading = true;
 
   @override
@@ -24,14 +22,7 @@ class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
   }
 
   Future<void> _initializeService() async {
-    final storageService = StorageService();
-    final token = await storageService.getToken();
-
-    final dio = Dio();
-    dio.options.headers['Authorization'] = 'Bearer $token';
-    dio.options.headers['Accept'] = 'application/json';
-
-    _pengumumanService = PengumumanService(dio);
+    _pengumumanService = PengumumanService();
     _loadPengumuman();
   }
 
@@ -53,7 +44,7 @@ class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
     }
   }
 
-  Future<void> _showFormDialog({Pengumuman? pengumuman}) async {
+  Future<void> _showFormDialog({PengumumanModel? pengumuman}) async {
     final judulController = TextEditingController(
       text: pengumuman?.judul ?? '',
     );
@@ -66,7 +57,7 @@ class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: Text(
-            pengumuman == null ? 'Tambah Pengumuman' : 'Edit Pengumuman',
+            pengumuman == null ? 'Tambah PengumumanModel' : 'Edit PengumumanModel',
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -83,7 +74,7 @@ class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
                 TextField(
                   controller: isiController,
                   decoration: const InputDecoration(
-                    labelText: 'Isi Pengumuman',
+                    labelText: 'Isi PengumumanModel',
                     border: OutlineInputBorder(),
                   ),
                   maxLines: 5,
@@ -143,19 +134,21 @@ class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
 
                 try {
                   if (pengumuman == null) {
-                    await _pengumumanService.createPengumuman(
-                      judul: judulController.text,
-                      isi: isiController.text,
-                      tipe: selectedTipe,
-                      target: selectedTarget,
-                    );
+                    await _pengumumanService.createPengumuman({
+                      'judul': judulController.text,
+                      'isi': isiController.text,
+                      'tipe': selectedTipe,
+                      'target': selectedTarget,
+                    });
                   } else {
                     await _pengumumanService.updatePengumuman(
-                      id: pengumuman.id,
-                      judul: judulController.text,
-                      isi: isiController.text,
-                      tipe: selectedTipe,
-                      target: selectedTarget,
+                      pengumuman.id,
+                      {
+                        'judul': judulController.text,
+                        'isi': isiController.text,
+                        'tipe': selectedTipe,
+                        'target': selectedTarget,
+                      },
                     );
                   }
 
@@ -165,8 +158,8 @@ class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
                       SnackBar(
                         content: Text(
                           pengumuman == null
-                              ? 'Pengumuman berhasil ditambahkan'
-                              : 'Pengumuman berhasil diupdate',
+                              ? 'PengumumanModel berhasil ditambahkan'
+                              : 'PengumumanModel berhasil diupdate',
                         ),
                       ),
                     );
@@ -213,7 +206,7 @@ class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
         await _pengumumanService.deletePengumuman(id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Pengumuman berhasil dihapus')),
+            const SnackBar(content: Text('PengumumanModel berhasil dihapus')),
           );
           _loadPengumuman();
         }
@@ -271,12 +264,12 @@ class _ManagePengumumanScreenState extends State<ManagePengumumanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kelola Pengumuman'),
+        title: const Text('Kelola PengumumanModel'),
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.campaign),
-            tooltip: 'Broadcast Pengumuman',
+            tooltip: 'Broadcast PengumumanModel',
             onPressed: () async {
               final result = await Navigator.push(
                 context,

@@ -1,179 +1,156 @@
-import 'package:dio/dio.dart';
 import '../models/pengumuman_model.dart';
-import '../../core/constants/app_constants.dart';
+import 'api_service.dart';
 
 class PengumumanService {
-  final Dio _dio;
+  final ApiService _apiService = ApiService();
 
-  PengumumanService(this._dio);
-
-  // Get all pengumuman (filtered by role)
-  Future<List<Pengumuman>> getPengumuman() async {
+  // Get all pengumuman
+  Future<List<PengumumanModel>> getPengumuman() async {
     try {
-      final response = await _dio.get('${AppConstants.baseUrl}/pengumuman');
+      final response = await _apiService.get('/pengumuman');
 
-      if (response.data['success']) {
-        List<dynamic> data = response.data['data'];
-        return data.map((json) => Pengumuman.fromJson(json)).toList();
+      if (response['success'] == true) {
+        final List<dynamic> data = response['data'];
+        return data.map((json) => PengumumanModel.fromJson(json)).toList();
       } else {
-        throw Exception(response.data['message']);
+        throw Exception(response['message'] ?? 'Gagal memuat data pengumuman');
       }
     } catch (e) {
-      throw Exception('Gagal mengambil pengumuman: $e');
-    }
-  }
-
-  // Get all pengumuman for admin (including inactive)
-  Future<List<Pengumuman>> getAdminPengumuman() async {
-    try {
-      final response = await _dio.get(
-        '${AppConstants.baseUrl}/pengumuman/admin',
-      );
-
-      if (response.data['success']) {
-        List<dynamic> data = response.data['data'];
-        return data.map((json) => Pengumuman.fromJson(json)).toList();
-      } else {
-        throw Exception(response.data['message']);
-      }
-    } catch (e) {
-      throw Exception('Gagal mengambil pengumuman: $e');
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
 
   // Get single pengumuman
-  Future<Pengumuman> getPengumumanById(int id) async {
+  Future<PengumumanModel> getPengumumanById(int id) async {
     try {
-      final response = await _dio.get('${AppConstants.baseUrl}/pengumuman/$id');
+      final response = await _apiService.get('/pengumuman/$id');
 
-      if (response.data['success']) {
-        return Pengumuman.fromJson(response.data['data']);
+      if (response['success'] == true) {
+        return PengumumanModel.fromJson(response['data']);
       } else {
-        throw Exception(response.data['message']);
+        throw Exception(
+          response['message'] ?? 'Gagal memuat detail pengumuman',
+        );
       }
     } catch (e) {
-      throw Exception('Gagal mengambil pengumuman: $e');
-    }
-  }
-
-  // Create pengumuman
-  Future<Pengumuman> createPengumuman({
-    required String judul,
-    required String isi,
-    required String tipe,
-    required String target,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '${AppConstants.baseUrl}/pengumuman',
-        data: {'judul': judul, 'isi': isi, 'tipe': tipe, 'target': target},
-      );
-
-      if (response.data['success']) {
-        return Pengumuman.fromJson(response.data['data']);
-      } else {
-        throw Exception(response.data['message']);
-      }
-    } catch (e) {
-      throw Exception('Gagal membuat pengumuman: $e');
-    }
-  }
-
-  // Update pengumuman
-  Future<Pengumuman> updatePengumuman({
-    required int id,
-    String? judul,
-    String? isi,
-    String? tipe,
-    String? target,
-    bool? isActive,
-  }) async {
-    try {
-      Map<String, dynamic> data = {};
-      if (judul != null) data['judul'] = judul;
-      if (isi != null) data['isi'] = isi;
-      if (tipe != null) data['tipe'] = tipe;
-      if (target != null) data['target'] = target;
-      if (isActive != null) data['is_active'] = isActive;
-
-      final response = await _dio.put(
-        '${AppConstants.baseUrl}/pengumuman/$id',
-        data: data,
-      );
-
-      if (response.data['success']) {
-        return Pengumuman.fromJson(response.data['data']);
-      } else {
-        throw Exception(response.data['message']);
-      }
-    } catch (e) {
-      throw Exception('Gagal mengupdate pengumuman: $e');
-    }
-  }
-
-  // Delete pengumuman
-  Future<void> deletePengumuman(int id) async {
-    try {
-      final response = await _dio.delete(
-        '${AppConstants.baseUrl}/pengumuman/$id',
-      );
-
-      if (!response.data['success']) {
-        throw Exception(response.data['message']);
-      }
-    } catch (e) {
-      throw Exception('Gagal menghapus pengumuman: $e');
-    }
-  }
-
-  // Toggle active status
-  Future<Pengumuman> toggleActive(int id) async {
-    try {
-      final response = await _dio.post(
-        '${AppConstants.baseUrl}/pengumuman/$id/toggle-active',
-      );
-
-      if (response.data['success']) {
-        return Pengumuman.fromJson(response.data['data']);
-      } else {
-        throw Exception(response.data['message']);
-      }
-    } catch (e) {
-      throw Exception('Gagal mengubah status pengumuman: $e');
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
 
   // Mark pengumuman as read
   Future<void> markAsRead(int id) async {
     try {
-      final response = await _dio.post(
-        '${AppConstants.baseUrl}/pengumuman/$id/mark-as-read',
+      final response = await _apiService.post(
+        '/pengumuman/$id/mark-as-read',
+        {},
       );
 
-      if (!response.data['success']) {
-        throw Exception(response.data['message']);
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Gagal menandai pengumuman');
       }
     } catch (e) {
-      // Silently fail - not critical
-      print('Error marking as read: $e');
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
 
   // Get unread count
-  Future<int> getUnreadCount() async {
+  Future<Map<String, int>> getUnreadCount() async {
     try {
-      final response = await _dio.get(
-        '${AppConstants.baseUrl}/pengumuman/unread/count',
-      );
+      final response = await _apiService.get('/pengumuman/unread/count');
 
-      if (response.data['success']) {
-        return response.data['data']['unread_count'] as int;
+      if (response['success'] == true) {
+        return {
+          'unread_count': response['data']['unread_count'] ?? 0,
+          'total_count': response['data']['total_count'] ?? 0,
+        };
       } else {
-        return 0;
+        throw Exception(
+          response['message'] ?? 'Gagal memuat jumlah pengumuman',
+        );
       }
     } catch (e) {
-      print('Error getting unread count: $e');
-      return 0;
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // ========== ADMIN METHODS ==========
+
+  // Get all pengumuman for admin
+  Future<List<PengumumanModel>> getAdminPengumuman() async {
+    try {
+      final response = await _apiService.get('/pengumuman/admin');
+
+      if (response['success'] == true) {
+        final List<dynamic> data = response['data'];
+        return data.map((json) => PengumumanModel.fromJson(json)).toList();
+      } else {
+        throw Exception(response['message'] ?? 'Gagal memuat data pengumuman');
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // Create new pengumuman
+  Future<PengumumanModel> createPengumuman(Map<String, dynamic> data) async {
+    try {
+      final response = await _apiService.post('/pengumuman', data);
+
+      if (response['success'] == true) {
+        return PengumumanModel.fromJson(response['data']);
+      } else {
+        throw Exception(response['message'] ?? 'Gagal membuat pengumuman');
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // Update pengumuman
+  Future<PengumumanModel> updatePengumuman(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await _apiService.put('/pengumuman/$id', data);
+
+      if (response['success'] == true) {
+        return PengumumanModel.fromJson(response['data']);
+      } else {
+        throw Exception(response['message'] ?? 'Gagal mengupdate pengumuman');
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // Delete pengumuman
+  Future<void> deletePengumuman(int id) async {
+    try {
+      final response = await _apiService.delete('/pengumuman/$id');
+
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Gagal menghapus pengumuman');
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // Toggle active status
+  Future<PengumumanModel> toggleActive(int id) async {
+    try {
+      final response = await _apiService.post('/pengumuman/$id/toggle', {});
+
+      if (response['success'] == true) {
+        return PengumumanModel.fromJson(response['data']);
+      } else {
+        throw Exception(
+          response['message'] ?? 'Gagal mengubah status pengumuman',
+        );
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
 }

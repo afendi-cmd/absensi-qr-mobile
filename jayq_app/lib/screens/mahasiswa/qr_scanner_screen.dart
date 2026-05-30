@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:provider/provider.dart';
-import '../../providers/theme_provider.dart';
 import '../../data/services/absensi_service.dart';
 import '../../data/services/storage_service.dart';
 import 'package:dio/dio.dart';
@@ -194,9 +192,6 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDarkMode;
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -219,7 +214,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             onPressed: () => cameraController.toggleTorch(),
           ),
           IconButton(
-            icon: const Icon(Icons.flip_camera_ios, color: Colors.white),
+            icon: const Icon(Icons.cameraswitch, color: Colors.white),
             onPressed: () => cameraController.switchCamera(),
           ),
         ],
@@ -245,14 +240,14 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
           // Instructions
           Positioned(
-            bottom: 100,
+            bottom: 80,
             left: 0,
             right: 0,
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 32),
-              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.symmetric(horizontal: 48),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: Colors.white.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -260,10 +255,10 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                 children: [
                   const Icon(
                     Icons.qr_code_scanner,
-                    size: 48,
+                    size: 56,
                     color: Color(0xFF003D9B),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   const Text(
                     'Arahkan kamera ke QR Code',
                     textAlign: TextAlign.center,
@@ -277,7 +272,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   const Text(
                     'QR Code akan otomatis terdeteksi',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Color(0xFF737685)),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                   ),
                   if (_isProcessing) ...[
                     const SizedBox(height: 16),
@@ -306,37 +301,45 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 class ScannerOverlay extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final double scanAreaSize = size.width * 0.7;
-    final double left = (size.width - scanAreaSize) / 2;
-    final double top = (size.height - scanAreaSize) / 2;
+    final double scanAreaWidth = size.width * 0.75;
+    final double scanAreaHeight = scanAreaWidth * 0.7; // Rectangular shape
+    final double left = (size.width - scanAreaWidth) / 2;
+    final double top = (size.height - scanAreaHeight) / 2 - 50;
 
-    // Draw semi-transparent overlay
+    // Create path for the overlay with a hole in the middle
+    final overlayPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    // Create path for the scanning area (hole)
+    final scanAreaPath = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(left, top, scanAreaWidth, scanAreaHeight),
+          const Radius.circular(12),
+        ),
+      );
+
+    // Subtract the scan area from overlay to create a hole
+    final overlayWithHole = Path.combine(
+      PathOperation.difference,
+      overlayPath,
+      scanAreaPath,
+    );
+
+    // Draw the overlay with hole
     final backgroundPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.5);
+      ..color = Colors.black.withValues(alpha: 0.6);
 
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      backgroundPaint,
-    );
+    canvas.drawPath(overlayWithHole, backgroundPaint);
 
-    // Clear the scanning area
-    final clearPaint = Paint()..blendMode = BlendMode.clear;
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(left, top, scanAreaSize, scanAreaSize),
-        const Radius.circular(16),
-      ),
-      clearPaint,
-    );
-
-    // Draw corner borders
+    // Draw corner borders (thicker and longer)
     final borderPaint = Paint()
       ..color = const Color(0xFF003D9B)
-      ..strokeWidth = 4
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
-    final cornerLength = 30.0;
+    final cornerLength = 40.0;
 
     // Top-left corner
     canvas.drawLine(
@@ -352,37 +355,37 @@ class ScannerOverlay extends CustomPainter {
 
     // Top-right corner
     canvas.drawLine(
-      Offset(left + scanAreaSize, top),
-      Offset(left + scanAreaSize - cornerLength, top),
+      Offset(left + scanAreaWidth, top),
+      Offset(left + scanAreaWidth - cornerLength, top),
       borderPaint,
     );
     canvas.drawLine(
-      Offset(left + scanAreaSize, top),
-      Offset(left + scanAreaSize, top + cornerLength),
+      Offset(left + scanAreaWidth, top),
+      Offset(left + scanAreaWidth, top + cornerLength),
       borderPaint,
     );
 
     // Bottom-left corner
     canvas.drawLine(
-      Offset(left, top + scanAreaSize),
-      Offset(left + cornerLength, top + scanAreaSize),
+      Offset(left, top + scanAreaHeight),
+      Offset(left + cornerLength, top + scanAreaHeight),
       borderPaint,
     );
     canvas.drawLine(
-      Offset(left, top + scanAreaSize),
-      Offset(left, top + scanAreaSize - cornerLength),
+      Offset(left, top + scanAreaHeight),
+      Offset(left, top + scanAreaHeight - cornerLength),
       borderPaint,
     );
 
     // Bottom-right corner
     canvas.drawLine(
-      Offset(left + scanAreaSize, top + scanAreaSize),
-      Offset(left + scanAreaSize - cornerLength, top + scanAreaSize),
+      Offset(left + scanAreaWidth, top + scanAreaHeight),
+      Offset(left + scanAreaWidth - cornerLength, top + scanAreaHeight),
       borderPaint,
     );
     canvas.drawLine(
-      Offset(left + scanAreaSize, top + scanAreaSize),
-      Offset(left + scanAreaSize, top + scanAreaSize - cornerLength),
+      Offset(left + scanAreaWidth, top + scanAreaHeight),
+      Offset(left + scanAreaWidth, top + scanAreaHeight - cornerLength),
       borderPaint,
     );
   }

@@ -4,14 +4,14 @@ import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../auth/login_screen.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+class DosenProfileScreen extends StatefulWidget {
+  const DosenProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<DosenProfileScreen> createState() => _DosenProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _DosenProfileScreenState extends State<DosenProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -74,7 +74,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Center(
                 child: Text(
-                  user?.name.substring(0, 1).toUpperCase() ?? 'M',
+                  user?.name.substring(0, 1).toUpperCase() ?? 'D',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
@@ -85,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              user?.name ?? 'Mahasiswa',
+              user?.name ?? 'Dosen',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -94,7 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              user?.email ?? 'mahasiswa@example.com',
+              user?.email ?? 'dosen@example.com',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
@@ -108,16 +108,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF1E40AF)
-                    : const Color(0xFFDBEAFE),
+                    ? const Color(0xFF7C3AED)
+                    : const Color(0xFFEDE9FE),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Mahasiswa',
+                'Dosen',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white : const Color(0xFF2563EB),
+                  color: isDark ? Colors.white : const Color(0xFF7C3AED),
                 ),
               ),
             ),

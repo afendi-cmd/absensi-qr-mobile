@@ -25,7 +25,18 @@ class Pengumuman extends Model
         'updated_at' => 'datetime',
     ];
 
-    protected $appends = [];
+    protected $appends = ['is_read'];
+
+    // Accessor for is_read attribute
+    public function getIsReadAttribute(): bool
+    {
+        // Get current authenticated user
+        $user = auth()->user();
+        if (!$user) {
+            return false;
+        }
+        return $this->isReadBy($user->id);
+    }
 
     public function creator(): BelongsTo
     {

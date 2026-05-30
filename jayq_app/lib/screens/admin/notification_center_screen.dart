@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
 import '../../providers/theme_provider.dart';
-import '../../data/services/storage_service.dart';
 import '../../data/services/pengumuman_service.dart';
 import '../../data/models/pengumuman_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -17,8 +15,10 @@ class NotificationCenterScreen extends StatefulWidget {
 
 class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   late PengumumanService _pengumumanService;
-  List<Pengumuman> _pengumumanList = [];
+  List<PengumumanModel> _pengumumanList = [];
+  List<PengumumanModel> _filteredList = [];
   bool _isLoading = true;
+  String _selectedFilter = 'all'; // all, mahasiswa, dosen
 
   @override
   void initState() {
@@ -28,14 +28,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   }
 
   Future<void> _initializeService() async {
-    final storageService = StorageService();
-    final token = await storageService.getToken();
-
-    final dio = Dio();
-    dio.options.headers['Authorization'] = 'Bearer $token';
-    dio.options.headers['Accept'] = 'application/json';
-
-    _pengumumanService = PengumumanService(dio);
+    _pengumumanService = PengumumanService();
     await _loadPengumuman();
   }
 
@@ -45,6 +38,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
       final pengumumans = await _pengumumanService.getPengumuman();
       setState(() {
         _pengumumanList = pengumumans;
+        _applyFilter();
         _isLoading = false;
       });
     } catch (e) {
@@ -56,6 +50,125 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
             backgroundColor: Colors.red,
           ),
         );
+      }
+    }
+  }
+
+  void _applyFilter() {
+    if (_selectedFilter == 'all') {
+      _filteredList = _pengumumanList;
+    } else if (_selectedFilter == 'mahasiswa') {
+      // Hanya tampilkan pengumuman dengan target 'mahasiswa' saja
+      _filteredList = _pengumumanList
+          .where((p) => p.target == 'mahasiswa')
+          .toList();
+    } else if (_selectedFilter == 'dosen') {
+      // Hanya tampilkan pengumuman dengan target 'dosen' saja
+      _filteredList = _pengumumanList
+          .where((p) => p.target == 'dosen')
+          .toList();
+    }
+
+    // Debug log
+    debugPrint('Filter: $_selectedFilter');
+    debugPrint('Total pengumuman: ${_pengumumanList.length}');
+    debugPrint('Filtered pengumuman: ${_filteredList.length}');
+    for (var p in _pengumumanList) {
+      debugPrint('Pengumuman: ${p.judul} - Target: ${p.target}');
+    }
+  }
+
+  Future<void> _markAllAsRead() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(context);
+        final isDark = themeProvider.isDarkMode;
+
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Tandai Semua Sebagai Dibaca',
+            style: TextStyle(
+              color: isDark ? Colors.white : const Color(0xFF191C1E),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menandai semua pengumuman sebagai sudah dibaca?',
+            style: TextStyle(
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Batal',
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF6B7280),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                'Tandai Semua',
+                style: TextStyle(color: Color(0xFF003D9B)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Menandai semua pengumuman...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+
+      // Mark all unread pengumuman as read
+      final unreadPengumuman = _pengumumanList.where((p) => !p.isRead).toList();
+
+      try {
+        for (final pengumuman in unreadPengumuman) {
+          await _pengumumanService.markAsRead(pengumuman.id);
+        }
+
+        // Reload list
+        await _loadPengumuman();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Berhasil menandai ${unreadPengumuman.length} pengumuman sebagai dibaca',
+              ),
+              backgroundColor: const Color(0xFF10B981),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal menandai pengumuman: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -89,30 +202,52 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
         actions: [
           if (_pengumumanList.isNotEmpty)
             TextButton(
-              onPressed: () {
-                // Mark all as read (future feature)
-              },
-              child: Text(
+              onPressed: _markAllAsRead,
+              child: const Text(
                 'Tandai Semua',
-                style: TextStyle(color: const Color(0xFF003D9B), fontSize: 14),
+                style: TextStyle(color: Color(0xFF003D9B), fontSize: 14),
               ),
             ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadPengumuman,
-              child: _pengumumanList.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _pengumumanList.length,
-                      itemBuilder: (context, index) {
-                        final pengumuman = _pengumumanList[index];
-                        return _buildNotificationCard(pengumuman, isDark);
-                      },
-                    ),
+          : Column(
+              children: [
+                // Filter Chips
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  color: isDark ? const Color(0xFF1F2937) : Colors.white,
+                  child: Row(
+                    children: [
+                      _buildFilterChip('Semua', 'all', isDark),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Mahasiswa', 'mahasiswa', isDark),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Dosen', 'dosen', isDark),
+                    ],
+                  ),
+                ),
+                // List
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _loadPengumuman,
+                    child: _filteredList.isEmpty
+                        ? _buildEmptyState(isDark)
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _filteredList.length,
+                            itemBuilder: (context, index) {
+                              final pengumuman = _filteredList[index];
+                              return _buildNotificationCard(pengumuman, isDark);
+                            },
+                          ),
+                  ),
+                ),
+              ],
             ),
     );
   }
@@ -149,9 +284,48 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
     );
   }
 
-  Widget _buildNotificationCard(Pengumuman pengumuman, bool isDark) {
+  Widget _buildFilterChip(String label, String value, bool isDark) {
+    final isSelected = _selectedFilter == value;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedFilter = value;
+          _applyFilter();
+        });
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF003D9B)
+              : (isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF003D9B)
+                : (isDark ? const Color(0xFF4B5563) : const Color(0xFFE5E7EB)),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationCard(PengumumanModel pengumuman, bool isDark) {
     final isUrgent = pengumuman.tipe == 'urgent';
     final isPenting = pengumuman.tipe == 'penting';
+    final isUnread = !pengumuman.isRead;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -159,12 +333,14 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
         color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isUrgent
+          color: isUnread
+              ? const Color(0xFF003D9B)
+              : isUrgent
               ? Colors.red.withValues(alpha: 0.3)
               : isPenting
               ? Colors.orange.withValues(alpha: 0.3)
               : (isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB)),
-          width: 1.5,
+          width: isUnread ? 2 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
@@ -180,9 +356,17 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
           borderRadius: BorderRadius.circular(12),
           onTap: () async {
             // Mark as read
-            await _pengumumanService.markAsRead(pengumuman.id);
+            try {
+              await _pengumumanService.markAsRead(pengumuman.id);
+              // Reload list to update read status
+              await _loadPengumuman();
+            } catch (e) {
+              debugPrint('Error marking as read: $e');
+            }
             // Show detail
-            _showPengumumanDetail(pengumuman, isDark);
+            if (mounted) {
+              _showPengumumanDetail(pengumuman, isDark);
+            }
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -226,7 +410,9 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                               pengumuman.judul,
                               style: TextStyle(
                                 fontSize: 15,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: isUnread
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
                                 color: isDark
                                     ? Colors.white
                                     : const Color(0xFF191C1E),
@@ -236,6 +422,20 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
+                          if (isUnread)
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFDC2626),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -262,6 +462,58 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                                     ? Colors.orange
                                     : const Color(0xFF003D9B),
                               ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: pengumuman.target == 'mahasiswa'
+                                  ? const Color(
+                                      0xFF3B82F6,
+                                    ).withValues(alpha: 0.1)
+                                  : pengumuman.target == 'dosen'
+                                  ? const Color(
+                                      0xFF8B5CF6,
+                                    ).withValues(alpha: 0.1)
+                                  : const Color(
+                                      0xFF10B981,
+                                    ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  pengumuman.target == 'mahasiswa'
+                                      ? Icons.school
+                                      : pengumuman.target == 'dosen'
+                                      ? Icons.person
+                                      : Icons.groups,
+                                  size: 10,
+                                  color: pengumuman.target == 'mahasiswa'
+                                      ? const Color(0xFF3B82F6)
+                                      : pengumuman.target == 'dosen'
+                                      ? const Color(0xFF8B5CF6)
+                                      : const Color(0xFF10B981),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  pengumuman.targetLabel,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: pengumuman.target == 'mahasiswa'
+                                        ? const Color(0xFF3B82F6)
+                                        : pengumuman.target == 'dosen'
+                                        ? const Color(0xFF8B5CF6)
+                                        : const Color(0xFF10B981),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -336,7 +588,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
     );
   }
 
-  void _showPengumumanDetail(Pengumuman pengumuman, bool isDark) {
+  void _showPengumumanDetail(PengumumanModel pengumuman, bool isDark) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
