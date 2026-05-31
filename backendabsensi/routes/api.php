@@ -100,6 +100,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Generate QR
         Route::post('/generate-qr', [QrController::class, 'generate']);
         Route::get('/qr-sessions', [QrController::class, 'index']);
+        Route::get('/qr-sessions/{id}', [QrController::class, 'show']);
+        Route::put('/qr-sessions/{id}/close', [QrController::class, 'close']);
 
         // Rekap Absensi
         Route::get('/rekap-absensi', [AbsensiController::class, 'rekapAbsensi']);

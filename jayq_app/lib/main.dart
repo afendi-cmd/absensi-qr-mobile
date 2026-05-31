@@ -7,6 +7,8 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/dashboard_provider.dart';
+import 'providers/dashboard_dosen_provider.dart';
+import 'providers/qr_provider.dart';
 import 'providers/peserta_mk_provider.dart';
 import 'routes/app_routes.dart';
 import 'screens/splash/splash_screen.dart';
@@ -73,6 +75,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => DashboardDosenProvider()),
+        ChangeNotifierProvider(create: (_) => QrProvider()),
         ChangeNotifierProvider(create: (_) => PesertaMkProvider()),
       ],
       child: Consumer<ThemeProvider>(

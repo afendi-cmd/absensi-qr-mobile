@@ -97,4 +97,90 @@ class QrController extends Controller
             'data' => $qrSessions
         ], 200);
     }
+
+    /**
+     * Get QR session detail with attendances
+     */
+    public function show($id)
+    {
+        $qrSession = QrSession::with([
+            'mataKuliah:id,nama_mk,kode_mk',
+            'absensi.user:id,nama,nim'
+        ])->find($id);
+
+        if (!$qrSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'QR Session tidak ditemukan'
+            ], 404);
+        }
+
+        // Validasi dosen
+        if ($qrSession->mataKuliah->dosen_id !== auth()->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses ke QR session ini'
+            ], 403);
+        }
+
+        $attendances = $qrSession->absensi->map(function($absen) {
+            return [
+                'id' => $absen->id,
+                'mahasiswa' => [
+                    'id' => $absen->user->id,
+                    'nama' => $absen->user->nama,
+                    'nim' => $absen->user->nim,
+                ],
+                'waktu_absen' => $absen->created_at->format('Y-m-d H:i:s'),
+                'status' => $absen->status,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data QR session berhasil diambil',
+            'data' => [
+                'id' => $qrSession->id,
+                'kode_qr' => $qrSession->kode_qr,
+                'mata_kuliah' => $qrSession->mataKuliah,
+                'expired_at' => $qrSession->expired_at->format('Y-m-d H:i:s'),
+                'is_active' => $qrSession->isActive(),
+                'total_hadir' => $attendances->count(),
+                'attendances' => $attendances,
+            ]
+        ], 200);
+    }
+
+    /**
+     * Close QR session manually
+     */
+    public function close($id)
+    {
+        $qrSession = QrSession::with('mataKuliah')->find($id);
+
+        if (!$qrSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'QR Session tidak ditemukan'
+            ], 404);
+        }
+
+        // Validasi dosen
+        if ($qrSession->mataKuliah->dosen_id !== auth()->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses ke QR session ini'
+            ], 403);
+        }
+
+        // Set expired_at to now
+        $qrSession->expired_at = Carbon::now();
+        $qrSession->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'QR Session berhasil ditutup',
+            'data' => $qrSession
+        ], 200);
+    }
 }
