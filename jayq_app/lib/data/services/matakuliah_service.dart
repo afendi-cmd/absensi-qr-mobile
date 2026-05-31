@@ -68,6 +68,21 @@ class MataKuliahService {
     }
   }
 
+  // Get mata kuliah dosen
+  Future<List<Map<String, dynamic>>> getDosenMataKuliah() async {
+    try {
+      final response = await _apiService.get('/mata-kuliah/dosen/me');
+
+      if (response['success'] == true) {
+        return List<Map<String, dynamic>>.from(response['data']);
+      } else {
+        throw Exception(response['message'] ?? 'Gagal memuat data mata kuliah');
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
   // Delete mata kuliah
   Future<void> deleteMataKuliah(int id) async {
     try {
