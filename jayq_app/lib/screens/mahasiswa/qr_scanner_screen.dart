@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../providers/theme_provider.dart';
 import '../../data/services/absensi_service.dart';
 import '../../data/services/storage_service.dart';
 import 'package:dio/dio.dart';
@@ -57,10 +59,14 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   }
 
   void _showSuccessDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -79,19 +85,24 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Absensi Berhasil!',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF191C1E),
+                color: isDark ? Colors.white : const Color(0xFF191C1E),
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Kehadiran Anda telah tercatat',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Color(0xFF737685)),
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF737685),
+              ),
             ),
           ],
         ),
@@ -123,9 +134,13 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   }
 
   void _showErrorDialog(String error) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -144,19 +159,24 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Absensi Gagal',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF191C1E),
+                color: isDark ? Colors.white : const Color(0xFF191C1E),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               error.replaceAll('Exception: ', ''),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF737685)),
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF737685),
+              ),
             ),
           ],
         ),

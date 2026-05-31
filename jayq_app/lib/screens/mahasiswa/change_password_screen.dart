@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../data/services/user_service.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -31,12 +33,22 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF8F9FB),
       appBar: AppBar(
-        title: const Text('Ubah Password'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF003d9b),
+        title: Text(
+          'Ubah Password',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF003d9b),
+          ),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF003d9b),
         elevation: 0,
       ),
       body: Form(
@@ -48,18 +60,35 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFDEEBFF),
+                color: isDark
+                    ? const Color(0xFF003d9b).withValues(alpha: 0.2)
+                    : const Color(0xFFDEEBFF),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF003d9b)),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF0052cc)
+                      : const Color(0xFF003d9b),
+                ),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Color(0xFF003d9b), size: 20),
-                  SizedBox(width: 12),
+                  Icon(
+                    Icons.info_outline,
+                    color: isDark
+                        ? const Color(0xFF60A5FA)
+                        : const Color(0xFF003d9b),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Password minimal 6 karakter',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF003d9b)),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark
+                            ? const Color(0xFF60A5FA)
+                            : const Color(0xFF003d9b),
+                      ),
                     ),
                   ),
                 ],
@@ -71,11 +100,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1F2937) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF003d9b).withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -84,12 +113,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Keamanan Akun',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF191c1e),
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -98,14 +127,30 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   TextFormField(
                     controller: _currentPasswordController,
                     obscureText: _obscureCurrentPassword,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Password Saat Ini',
-                      prefixIcon: const Icon(Icons.lock_outline),
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureCurrentPassword
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF737685),
                         ),
                         onPressed: () {
                           setState(() {
@@ -118,7 +163,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFe1e2e4)),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFe1e2e4),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -127,6 +176,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           width: 2,
                         ),
                       ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF111827)
+                          : Colors.white,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -141,14 +194,30 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   TextFormField(
                     controller: _newPasswordController,
                     obscureText: _obscureNewPassword,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Password Baru',
-                      prefixIcon: const Icon(Icons.lock_outline),
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureNewPassword
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF737685),
                         ),
                         onPressed: () {
                           setState(() {
@@ -161,7 +230,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFe1e2e4)),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFe1e2e4),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -170,6 +243,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           width: 2,
                         ),
                       ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF111827)
+                          : Colors.white,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -187,14 +264,30 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Konfirmasi Password Baru',
-                      prefixIcon: const Icon(Icons.lock_outline),
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureConfirmPassword
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF737685),
                         ),
                         onPressed: () {
                           setState(() {
@@ -207,7 +300,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFe1e2e4)),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFe1e2e4),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -216,6 +313,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           width: 2,
                         ),
                       ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF111827)
+                          : Colors.white,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {

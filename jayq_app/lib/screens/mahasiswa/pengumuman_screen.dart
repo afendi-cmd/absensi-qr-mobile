@@ -66,6 +66,88 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
     });
   }
 
+  Future<void> _markAllAsRead() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(context);
+        final isDark = themeProvider.isDarkMode;
+
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Tandai Semua Sudah Dibaca?',
+            style: TextStyle(
+              color: isDark ? Colors.white : const Color(0xFF191c1e),
+            ),
+          ),
+          content: Text(
+            'Semua pengumuman yang belum dibaca akan ditandai sebagai sudah dibaca.',
+            style: TextStyle(
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF737685),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Batal',
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF737685),
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF003d9b),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Tandai Semua'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      // Mark all as read
+      await _pengumumanService.markAllAsRead();
+
+      // Reload data
+      await _loadData();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$_unreadCount pengumuman ditandai sudah dibaca'),
+            backgroundColor: const Color(0xFF10B981),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: const Color(0xFFDC2626),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -75,78 +157,71 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
       backgroundColor: isDark
           ? const Color(0xFF111827)
           : const Color(0xFFF8F9FB),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
+      appBar: AppBar(
+        title: Text(
+          'Pengumuman',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF003d9b),
+          ),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF003d9b),
+        elevation: 0,
+        actions: [
+          if (_unreadCount > 0) ...[
+            // Badge Unread Count
             Container(
-              padding: const EdgeInsets.all(16),
-              color: isDark ? const Color(0xFF1F2937) : Colors.white,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDC2626),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '$_unreadCount Baru',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            // Mark All as Read Button
+            IconButton(
+              icon: const Icon(Icons.done_all),
+              tooltip: 'Tandai Semua Sudah Dibaca',
+              onPressed: _markAllAsRead,
+            ),
+          ],
+        ],
+      ),
+      body: Column(
+        children: [
+          // Filter Chips Container
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: isDark ? const Color(0xFF1F2937) : Colors.white,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Pengumuman',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF003d9b),
-                          ),
-                        ),
-                      ),
-                      if (_unreadCount > 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDC2626),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '$_unreadCount Baru',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Filter Chips
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildFilterChip('Semua', 'all'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Belum Dibaca', 'unread'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Info', 'info'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Penting', 'penting'),
-                        const SizedBox(width: 8),
-                        _buildFilterChip('Urgent', 'urgent'),
-                      ],
-                    ),
-                  ),
+                  _buildFilterChip('Semua', 'all'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('Belum Dibaca', 'unread'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('Info', 'info'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('Penting', 'penting'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('Urgent', 'urgent'),
                 ],
               ),
             ),
+          ),
 
-            // Content
-            Expanded(child: _buildContent()),
-          ],
-        ),
+          // Content
+          Expanded(child: _buildContent()),
+        ],
       ),
     );
   }
@@ -187,57 +262,99 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
   }
 
   Widget _buildContent() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Color(0xFFDC2626)),
-            const SizedBox(height: 16),
-            Text(
-              _error!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF737685)),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadData,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF003d9b),
-                foregroundColor: Colors.white,
+      return RefreshIndicator(
+        onRefresh: _loadData,
+        color: const Color(0xFF003d9b),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 300,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Color(0xFFDC2626),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _error!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF737685),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadData,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF003d9b),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
               ),
-              child: const Text('Coba Lagi'),
             ),
-          ],
+          ),
         ),
       );
     }
 
     if (_filteredList.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.notifications_none, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              _selectedFilter == 'unread'
-                  ? 'Tidak ada pengumuman baru'
-                  : 'Tidak ada pengumuman',
-              style: const TextStyle(fontSize: 16, color: Color(0xFF737685)),
+      return RefreshIndicator(
+        onRefresh: _loadData,
+        color: const Color(0xFF003d9b),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 300,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.notifications_none,
+                    size: 64,
+                    color: isDark ? const Color(0xFF374151) : Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _selectedFilter == 'unread'
+                        ? 'Tidak ada pengumuman baru'
+                        : 'Tidak ada pengumuman',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF737685),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: _loadData,
+      color: const Color(0xFF003d9b),
       child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         itemCount: _filteredList.length,
         itemBuilder: (context, index) {

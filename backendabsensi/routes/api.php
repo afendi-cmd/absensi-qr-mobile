@@ -154,6 +154,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pengumuman', [PengumumanController::class, 'index']);
     Route::get('/pengumuman/{id}', [PengumumanController::class, 'show']);
     Route::post('/pengumuman/{id}/mark-as-read', [PengumumanController::class, 'markAsRead']);
+    Route::post('/pengumuman/mark-all-as-read', [PengumumanController::class, 'markAllAsRead']);
     Route::get('/pengumuman/unread/count', [PengumumanController::class, 'getUnreadCount']);
     
     // Profile Management (accessible by all roles)

@@ -387,38 +387,55 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final schedules = _groupedSchedules[selectedDay] ?? [];
 
     if (schedules.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.calendar_today,
-              size: 80,
-              color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Tidak ada jadwal kuliah lainnya.',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark
-                    ? const Color(0xFF9CA3AF)
-                    : const Color(0xFF737685),
+      return RefreshIndicator(
+        onRefresh: _loadSchedule,
+        color: const Color(0xFF003d9b),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 300,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 80,
+                    color: isDark
+                        ? const Color(0xFF374151)
+                        : const Color(0xFFE5E7EB),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Tidak ada jadwal kuliah lainnya.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF737685),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: schedules.length,
-      itemBuilder: (context, index) {
-        final schedule = schedules[index];
-        final status = _getStatusForSchedule(schedule);
-        return _buildScheduleCard(schedule, status);
-      },
+    return RefreshIndicator(
+      onRefresh: _loadSchedule,
+      color: const Color(0xFF003d9b),
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: schedules.length,
+        itemBuilder: (context, index) {
+          final schedule = schedules[index];
+          final status = _getStatusForSchedule(schedule);
+          return _buildScheduleCard(schedule, status);
+        },
+      ),
     );
   }
 

@@ -53,6 +53,24 @@ class PengumumanService {
     }
   }
 
+  // Mark all pengumuman as read
+  Future<void> markAllAsRead() async {
+    try {
+      final response = await _apiService.post(
+        '/pengumuman/mark-all-as-read',
+        {},
+      );
+
+      if (response['success'] != true) {
+        throw Exception(
+          response['message'] ?? 'Gagal menandai semua pengumuman',
+        );
+      }
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
   // Get unread count
   Future<Map<String, int>> getUnreadCount() async {
     try {

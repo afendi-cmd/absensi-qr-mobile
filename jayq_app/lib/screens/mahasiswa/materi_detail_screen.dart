@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../providers/theme_provider.dart';
 import '../../data/models/materi_model.dart';
 import '../../data/services/materi_service.dart';
 
@@ -11,14 +13,23 @@ class MateriDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     final materiService = MateriService();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF8F9FB),
       appBar: AppBar(
-        title: const Text('Detail Materi'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF003d9b),
+        title: Text(
+          'Detail Materi',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF003d9b),
+          ),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF003d9b),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -98,11 +109,11 @@ class MateriDetailScreen extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1F2937) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF003d9b).withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -114,20 +125,33 @@ class MateriDetailScreen extends StatelessWidget {
                     icon: Icons.book_outlined,
                     label: 'Mata Kuliah',
                     value: materi.mataKuliah?.namaMk ?? '-',
+                    isDark: isDark,
                   ),
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: isDark
+                        ? const Color(0xFF374151)
+                        : const Color(0xFFE5E7EB),
+                  ),
                   _buildMetaRow(
                     icon: Icons.code_outlined,
                     label: 'Kode MK',
                     value: materi.mataKuliah?.kodeMk ?? '-',
+                    isDark: isDark,
                   ),
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: isDark
+                        ? const Color(0xFF374151)
+                        : const Color(0xFFE5E7EB),
+                  ),
                   _buildMetaRow(
                     icon: Icons.calendar_today_outlined,
                     label: 'Tanggal Upload',
                     value: DateFormat(
                       'EEEE, d MMMM yyyy',
                     ).format(materi.createdAt),
+                    isDark: isDark,
                   ),
                 ],
               ),
@@ -141,11 +165,13 @@ class MateriDetailScreen extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1F2937) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF003d9b).withValues(alpha: 0.08),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.2 : 0.08,
+                      ),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -154,20 +180,22 @@ class MateriDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Deskripsi Materi',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF191c1e),
+                        color: isDark ? Colors.white : const Color(0xFF191c1e),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       materi.deskripsi!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        color: Color(0xFF191c1e),
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF191c1e),
                         height: 1.6,
                       ),
                     ),
@@ -211,6 +239,7 @@ class MateriDetailScreen extends StatelessWidget {
     required IconData icon,
     required String label,
     required String value,
+    required bool isDark,
   }) {
     return Row(
       children: [
@@ -230,15 +259,20 @@ class MateriDetailScreen extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF737685)),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF737685),
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF191c1e),
+                  color: isDark ? Colors.white : const Color(0xFF191c1e),
                 ),
               ),
             ],

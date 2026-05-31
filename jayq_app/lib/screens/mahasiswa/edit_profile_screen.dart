@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../data/services/user_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -43,12 +44,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF8F9FB),
       appBar: AppBar(
-        title: const Text('Edit Profil'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF003d9b),
+        title: Text(
+          'Edit Profil',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF003d9b),
+          ),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF003d9b),
         elevation: 0,
       ),
       body: Form(
@@ -113,10 +124,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Center(
+            Center(
               child: Text(
                 'Tap untuk ubah foto',
-                style: TextStyle(fontSize: 12, color: Color(0xFF737685)),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF737685),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -125,11 +141,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1F2937) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF003d9b).withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -138,12 +154,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Informasi Pribadi',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF191c1e),
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -151,15 +167,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Nama
                   TextFormField(
                     controller: _namaController,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Nama Lengkap',
-                      prefixIcon: const Icon(Icons.person_outline),
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.person_outline,
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFe1e2e4)),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFe1e2e4),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -168,6 +201,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 2,
                         ),
                       ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF111827)
+                          : Colors.white,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -181,15 +218,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Email
                   TextFormField(
                     controller: _emailController,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      prefixIcon: const Icon(Icons.email_outlined),
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.email_outlined,
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFe1e2e4)),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFe1e2e4),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -198,6 +252,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 2,
                         ),
                       ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF111827)
+                          : Colors.white,
                     ),
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
@@ -215,15 +273,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // No HP
                   TextFormField(
                     controller: _noHpController,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
+                    ),
                     decoration: InputDecoration(
                       labelText: 'No. HP',
-                      prefixIcon: const Icon(Icons.phone_outlined),
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.phone_outlined,
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFe1e2e4)),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFe1e2e4),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -232,6 +307,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 2,
                         ),
                       ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF111827)
+                          : Colors.white,
                     ),
                     keyboardType: TextInputType.phone,
                   ),
@@ -240,15 +319,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Alamat
                   TextFormField(
                     controller: _alamatController,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Alamat',
-                      prefixIcon: const Icon(Icons.location_on_outlined),
+                      labelStyle: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.location_on_outlined,
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF737685),
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFe1e2e4)),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFe1e2e4),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -257,6 +353,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 2,
                         ),
                       ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF111827)
+                          : Colors.white,
                     ),
                     maxLines: 3,
                   ),

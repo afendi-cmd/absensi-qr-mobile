@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Pengumuman;
 use App\Models\PengumumanRead;
+use App\Models\User;
+use App\Services\FcmService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -94,6 +96,9 @@ class PengumumanController extends Controller
             ]);
 
             $pengumuman->load('creator:id,nama,email');
+
+            // Send FCM notification to target users
+            $this->sendPengumumanNotification($pengumuman);
 
             return response()->json([
                 'success' => true,
@@ -245,6 +250,59 @@ class PengumumanController extends Controller
         }
     }
 
+    // Mark all pengumuman as read
+    public function markAllAsRead(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            // Get all pengumuman IDs that match user's role and are active
+            $query = Pengumuman::where('is_active', true);
+            
+            if ($user->role !== 'admin') {
+                $query->where(function($q) use ($user) {
+                    $q->where('target', 'all')
+                      ->orWhere('target', $user->role);
+                });
+            }
+            
+            $allPengumumanIds = $query->pluck('id');
+            
+            // Get pengumuman IDs that user has already read
+            $readPengumumanIds = PengumumanRead::where('user_id', $user->id)
+                ->whereIn('pengumuman_id', $allPengumumanIds)
+                ->pluck('pengumuman_id')
+                ->toArray();
+            
+            // Get unread pengumuman IDs
+            $unreadPengumumanIds = $allPengumumanIds->diff($readPengumumanIds);
+            
+            // Mark all unread as read
+            $markedCount = 0;
+            foreach ($unreadPengumumanIds as $pengumumanId) {
+                PengumumanRead::create([
+                    'pengumuman_id' => $pengumumanId,
+                    'user_id' => $user->id,
+                ]);
+                $markedCount++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "$markedCount pengumuman ditandai sudah dibaca",
+                'data' => [
+                    'marked_count' => $markedCount,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai semua pengumuman',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     // Get unread count
     public function getUnreadCount(Request $request)
     {
@@ -284,6 +342,53 @@ class PengumumanController extends Controller
                 'message' => 'Gagal mengambil jumlah pengumuman belum dibaca',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Send FCM notification to target users
+     */
+    private function sendPengumumanNotification(Pengumuman $pengumuman)
+    {
+        try {
+            $fcmService = new FcmService();
+            
+            // Determine target users based on pengumuman target
+            $query = User::whereNotNull('fcm_token');
+            
+            if ($pengumuman->target === 'mahasiswa') {
+                $query->where('role', 'mahasiswa');
+            } elseif ($pengumuman->target === 'dosen') {
+                $query->where('role', 'dosen');
+            } else {
+                // target = 'all', send to both mahasiswa and dosen
+                $query->whereIn('role', ['mahasiswa', 'dosen']);
+            }
+            
+            $users = $query->get();
+            $fcmTokens = $users->pluck('fcm_token')->filter()->toArray();
+            
+            if (empty($fcmTokens)) {
+                \Log::info('No FCM tokens found for pengumuman notification');
+                return;
+            }
+            
+            // Prepare notification data
+            $title = '📢 ' . ucfirst($pengumuman->tipe) . ': ' . $pengumuman->judul;
+            $body = substr($pengumuman->isi, 0, 100) . (strlen($pengumuman->isi) > 100 ? '...' : '');
+            $data = [
+                'type' => 'pengumuman',
+                'pengumuman_id' => (string) $pengumuman->id,
+                'tipe' => $pengumuman->tipe,
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            ];
+            
+            // Send notifications
+            $successCount = $fcmService->sendToMultipleDevices($fcmTokens, $title, $body, $data);
+            
+            \Log::info("Sent pengumuman notification to $successCount devices");
+        } catch (\Exception $e) {
+            \Log::error('Failed to send pengumuman notification: ' . $e->getMessage());
         }
     }
 }

@@ -75,9 +75,25 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
             : _buildProfileContent(),
       ),
       bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: _buildScanQrFab(),
+      floatingActionButton: _selectedIndex == 0 ? _buildScanQrFab() : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
+  }
+
+  Future<void> _refreshHomeData() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final dashboardProvider = Provider.of<DashboardProvider>(
+      context,
+      listen: false,
+    );
+
+    if (authProvider.user != null) {
+      await Future.wait([
+        dashboardProvider.loadMahasiswaStats(authProvider.user!.id),
+        dashboardProvider.loadMahasiswaMataKuliah(authProvider.user!.id),
+        _loadUnreadCount(),
+      ]);
+    }
   }
 
   Widget _buildHomeContent() {
@@ -88,183 +104,191 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
     final now = DateTime.now();
     final dateFormat = DateFormat('EEEE, d MMMM yyyy');
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: isDark ? const Color(0xFF1F2937) : Colors.white,
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: const Color(0xFF003d9b),
-                  child: Text(
-                    user?.name.substring(0, 1).toUpperCase() ?? 'M',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+    return RefreshIndicator(
+      onRefresh: _refreshHomeData,
+      color: const Color(0xFF003d9b),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: isDark ? const Color(0xFF1F2937) : Colors.white,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: const Color(0xFF003d9b),
+                    child: Text(
+                      user?.name.substring(0, 1).toUpperCase() ?? 'M',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Presensi Kampus',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF003d9b),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Presensi Kampus',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : const Color(0xFF003d9b),
+                      ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: Stack(
-                    children: [
-                      const Icon(Icons.notifications_outlined),
-                      if (_unreadCount > 0)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFDC2626),
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              _unreadCount > 9 ? '9+' : '$_unreadCount',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
+                  IconButton(
+                    icon: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.notifications_outlined),
+                        if (_unreadCount > 0)
+                          Positioned(
+                            right: -2,
+                            top: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFDC2626),
+                                shape: BoxShape.circle,
                               ),
-                              textAlign: TextAlign.center,
+                              constraints: const BoxConstraints(
+                                minWidth: 14,
+                                minHeight: 14,
+                              ),
+                              child: Text(
+                                _unreadCount > 9 ? '9+' : '$_unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
+                      ],
+                    ),
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PengumumanScreen(),
                         ),
-                    ],
+                      );
+                      _loadUnreadCount();
+                    },
+                    color: const Color(0xFF003d9b),
                   ),
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PengumumanScreen(),
-                      ),
-                    );
-                    _loadUnreadCount();
-                  },
-                  color: const Color(0xFF003d9b),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Greeting
-                Text(
-                  'Halo, ${user?.name ?? 'Mahasiswa'}!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF191c1e),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  dateFormat.format(now),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDark
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF737685),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Attendance Card
-                _buildAttendanceCard(),
-                const SizedBox(height: 24),
-
-                // Schedule Section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Jadwal Hari Ini',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF191c1e),
-                      ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Greeting
+                  Text(
+                    'Halo, ${user?.name ?? 'Mahasiswa'}!',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF191c1e),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() => _selectedIndex = 1);
-                      },
-                      child: const Text(
-                        'Lihat Semua',
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    dateFormat.format(now),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF737685),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Attendance Card
+                  _buildAttendanceCard(),
+                  const SizedBox(height: 24),
+
+                  // Schedule Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Jadwal Hari Ini',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 20,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF003d9b),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF191c1e),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Schedule Cards
-                _buildScheduleList(),
-                const SizedBox(height: 24),
-
-                // Quick Actions
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickActionCard(
-                        icon: Icons.calendar_month,
-                        label: 'Kalender\nAkademik',
-                        iconColor: const Color(0xFF003d9b),
-                        onTap: () {
+                      TextButton(
+                        onPressed: () {
                           setState(() => _selectedIndex = 1);
                         },
+                        child: const Text(
+                          'Lihat Semua',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF003d9b),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildQuickActionCard(
-                        icon: Icons.assignment_turned_in_outlined,
-                        label: 'Tugas & Ujian',
-                        iconColor: const Color(0xFF6B7280),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const TugasMateriScreen(),
-                            ),
-                          );
-                        },
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Schedule Cards
+                  _buildScheduleList(),
+                  const SizedBox(height: 24),
+
+                  // Quick Actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          icon: Icons.calendar_month,
+                          label: 'Kalender\nAkademik',
+                          iconColor: const Color(0xFF003d9b),
+                          onTap: () {
+                            setState(() => _selectedIndex = 1);
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 100), // Extra space untuk FAB
-              ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          icon: Icons.assignment_turned_in_outlined,
+                          label: 'Tugas & Ujian',
+                          iconColor: const Color(0xFF6B7280),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TugasMateriScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 100), // Extra space untuk FAB
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -499,16 +523,17 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
                 size: 16,
                 color: isDark
                     ? const Color(0xFF9CA3AF)
-                    : const Color(0xFF737685),
+                    : const Color(0xFF374151),
               ),
               const SizedBox(width: 6),
               Text(
                 location,
                 style: TextStyle(
                   fontSize: 14,
+                  fontWeight: FontWeight.w500,
                   color: isDark
-                      ? const Color(0xFF9CA3AF)
-                      : const Color(0xFF737685),
+                      ? const Color(0xFFD1D5DB)
+                      : const Color(0xFF374151),
                 ),
               ),
             ],
@@ -521,16 +546,17 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
                 size: 16,
                 color: isDark
                     ? const Color(0xFF9CA3AF)
-                    : const Color(0xFF737685),
+                    : const Color(0xFF374151),
               ),
               const SizedBox(width: 6),
               Text(
                 lecturer,
                 style: TextStyle(
                   fontSize: 14,
+                  fontWeight: FontWeight.w500,
                   color: isDark
-                      ? const Color(0xFF9CA3AF)
-                      : const Color(0xFF737685),
+                      ? const Color(0xFFD1D5DB)
+                      : const Color(0xFF374151),
                 ),
               ),
             ],

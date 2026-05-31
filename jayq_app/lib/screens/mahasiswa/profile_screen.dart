@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../auth/login_screen.dart';
+import 'edit_profile_screen.dart';
+import 'change_password_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -176,7 +178,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.notifications_outlined,
                   title: 'Notifikasi',
                   isDark: isDark,
-                  onTap: () {},
+                  onTap: () {
+                    _showNotificationSettings();
+                  },
                 ),
                 _buildDivider(isDark),
                 _buildMenuItem(
@@ -184,7 +188,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'Bahasa',
                   isDark: isDark,
                   subtitle: 'Indonesia',
-                  onTap: () {},
+                  onTap: () {
+                    _showLanguageSettings();
+                  },
                 ),
               ],
             ),
@@ -232,13 +238,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.person_outline,
                   title: 'Edit Profil',
                   isDark: isDark,
-                  onTap: () {
-                    // TODO: Navigate to edit profile
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Fitur Edit Profil akan segera hadir'),
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfileScreen(),
                       ),
                     );
+
+                    // Reload user data if profile was updated
+                    if (result == true && mounted) {
+                      setState(() {});
+                    }
                   },
                 ),
                 _buildDivider(isDark),
@@ -246,13 +257,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.lock_outline,
                   title: 'Ubah Password',
                   isDark: isDark,
-                  onTap: () {
-                    // TODO: Navigate to change password
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Fitur Ubah Password akan segera hadir'),
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChangePasswordScreen(),
                       ),
                     );
+
+                    // Show success message if password was changed
+                    if (result == true && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Password berhasil diubah'),
+                          backgroundColor: Color(0xFF10B981),
+                        ),
+                      );
+                    }
                   },
                 ),
               ],
@@ -301,21 +322,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.help_outline,
                   title: 'Bantuan & Dukungan',
                   isDark: isDark,
-                  onTap: () {},
+                  onTap: () {
+                    _showHelpDialog();
+                  },
                 ),
                 _buildDivider(isDark),
                 _buildMenuItem(
                   icon: Icons.description_outlined,
                   title: 'Syarat & Ketentuan',
                   isDark: isDark,
-                  onTap: () {},
+                  onTap: () {
+                    _showTermsDialog();
+                  },
                 ),
                 _buildDivider(isDark),
                 _buildMenuItem(
                   icon: Icons.privacy_tip_outlined,
                   title: 'Kebijakan Privasi',
                   isDark: isDark,
-                  onTap: () {},
+                  onTap: () {
+                    _showPrivacyDialog();
+                  },
                 ),
                 _buildDivider(isDark),
                 _buildMenuItem(
@@ -323,7 +350,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'Tentang Aplikasi',
                   isDark: isDark,
                   subtitle: 'Versi 1.0.0',
-                  onTap: () {},
+                  onTap: () {
+                    _showAboutDialog();
+                  },
                 ),
               ],
             ),
@@ -474,6 +503,336 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showNotificationSettings() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Pengaturan Notifikasi',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF191c1e),
+          ),
+        ),
+        content: Text(
+          'Fitur pengaturan notifikasi akan segera hadir. Anda akan dapat mengatur preferensi notifikasi untuk pengumuman, tugas, dan absensi.',
+          style: TextStyle(
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF737685),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLanguageSettings() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Pengaturan Bahasa',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF191c1e),
+          ),
+        ),
+        content: Text(
+          'Saat ini aplikasi hanya tersedia dalam Bahasa Indonesia. Dukungan multi-bahasa akan ditambahkan di versi mendatang.',
+          style: TextStyle(
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF737685),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHelpDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Bantuan & Dukungan',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF191c1e),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Butuh bantuan? Hubungi kami melalui:',
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF737685),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildContactItem(
+                Icons.email_outlined,
+                'Email',
+                'support@presensi.ac.id',
+                isDark,
+              ),
+              const SizedBox(height: 12),
+              _buildContactItem(
+                Icons.phone_outlined,
+                'Telepon',
+                '+62 21 1234 5678',
+                isDark,
+              ),
+              const SizedBox(height: 12),
+              _buildContactItem(
+                Icons.access_time,
+                'Jam Operasional',
+                'Senin - Jumat, 08:00 - 17:00',
+                isDark,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTermsDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Syarat & Ketentuan',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF191c1e),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            '1. Penggunaan Aplikasi\n'
+            'Aplikasi ini hanya untuk keperluan akademik dan absensi mahasiswa.\n\n'
+            '2. Akun Pengguna\n'
+            'Setiap pengguna bertanggung jawab atas keamanan akun mereka.\n\n'
+            '3. Data Pribadi\n'
+            'Data pribadi akan dijaga kerahasiaannya sesuai kebijakan privasi.\n\n'
+            '4. Larangan\n'
+            'Dilarang menyalahgunakan aplikasi untuk tujuan yang melanggar hukum.\n\n'
+            '5. Perubahan Ketentuan\n'
+            'Kami berhak mengubah syarat dan ketentuan sewaktu-waktu.',
+            style: TextStyle(
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF737685),
+              height: 1.5,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Kebijakan Privasi',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF191c1e),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            '1. Pengumpulan Data\n'
+            'Kami mengumpulkan data seperti nama, email, dan data absensi untuk keperluan akademik.\n\n'
+            '2. Penggunaan Data\n'
+            'Data digunakan untuk sistem absensi, pengumuman, dan manajemen akademik.\n\n'
+            '3. Keamanan Data\n'
+            'Data disimpan dengan enkripsi dan hanya dapat diakses oleh pihak berwenang.\n\n'
+            '4. Berbagi Data\n'
+            'Data tidak akan dibagikan kepada pihak ketiga tanpa persetujuan.\n\n'
+            '5. Hak Pengguna\n'
+            'Anda berhak mengakses, mengubah, atau menghapus data pribadi Anda.',
+            style: TextStyle(
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF737685),
+              height: 1.5,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Tentang Aplikasi',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF191c1e),
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFF003d9b),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.school, color: Colors.white, size: 40),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Presensi Kampus',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : const Color(0xFF191c1e),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Versi 1.0.0',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF737685),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Aplikasi absensi dan manajemen akademik untuk mahasiswa dan dosen.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF737685),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '© 2026 Presensi Kampus',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark
+                    ? const Color(0xFF6B7280)
+                    : const Color(0xFF9CA3AF),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactItem(
+    IconData icon,
+    String label,
+    String value,
+    bool isDark,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF003d9b)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF737685),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white : const Color(0xFF191c1e),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -541,33 +541,49 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.event_busy_rounded,
-            size: 80,
-            color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Belum ada riwayat',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: const Color(0xFF003d9b),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height - 300,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.event_busy_rounded,
+                  size: 80,
+                  color: isDark
+                      ? const Color(0xFF374151)
+                      : const Color(0xFFE5E7EB),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Belum ada riwayat',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF6B7280),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Riwayat absensi Anda akan muncul di sini',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark
+                        ? const Color(0xFF6B7280)
+                        : const Color(0xFF9CA3AF),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Riwayat absensi Anda akan muncul di sini',
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

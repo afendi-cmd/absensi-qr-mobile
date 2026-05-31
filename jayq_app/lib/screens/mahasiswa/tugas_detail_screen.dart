@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../providers/theme_provider.dart';
 import '../../data/models/tugas_model.dart';
 import '../../data/services/tugas_service.dart';
 
@@ -22,6 +24,8 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     Color statusColor;
 
     if (widget.tugas.sudahDikumpulkan) {
@@ -33,11 +37,18 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF8F9FB),
       appBar: AppBar(
-        title: const Text('Detail Tugas'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF003d9b),
+        title: Text(
+          'Detail Tugas',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF003d9b),
+          ),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF003d9b),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -106,11 +117,11 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1F2937) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF003d9b).withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -122,16 +133,28 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                     icon: Icons.book_outlined,
                     label: 'Mata Kuliah',
                     value: widget.tugas.mataKuliah?.namaMk ?? '-',
+                    isDark: isDark,
                   ),
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: isDark
+                        ? const Color(0xFF374151)
+                        : const Color(0xFFE5E7EB),
+                  ),
                   _buildMetaRow(
                     icon: Icons.calendar_today_outlined,
                     label: 'Deadline',
                     value: DateFormat(
                       'EEEE, d MMMM yyyy HH:mm',
                     ).format(widget.tugas.deadline),
+                    isDark: isDark,
                   ),
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: isDark
+                        ? const Color(0xFF374151)
+                        : const Color(0xFFE5E7EB),
+                  ),
                   _buildMetaRow(
                     icon: Icons.access_time_outlined,
                     label: 'Sisa Waktu',
@@ -139,6 +162,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                     valueColor: widget.tugas.isOverdue
                         ? const Color(0xFFDC2626)
                         : null,
+                    isDark: isDark,
                   ),
                 ],
               ),
@@ -152,11 +176,13 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1F2937) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF003d9b).withValues(alpha: 0.08),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.2 : 0.08,
+                      ),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -165,20 +191,22 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Deskripsi Tugas',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF191c1e),
+                        color: isDark ? Colors.white : const Color(0xFF191c1e),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       widget.tugas.deskripsi!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        color: Color(0xFF191c1e),
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF191c1e),
                         height: 1.6,
                       ),
                     ),
@@ -194,11 +222,13 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1F2937) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF003d9b).withValues(alpha: 0.08),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.2 : 0.08,
+                      ),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -207,12 +237,12 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'File Tugas',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF191c1e),
+                        color: isDark ? Colors.white : const Color(0xFF191c1e),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -222,9 +252,15 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FB),
+                          color: isDark
+                              ? const Color(0xFF111827)
+                              : const Color(0xFFF8F9FB),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFe1e2e4)),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF374151)
+                                : const Color(0xFFe1e2e4),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -234,13 +270,15 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                               size: 24,
                             ),
                             const SizedBox(width: 12),
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 'Download File Tugas',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF191c1e),
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF191c1e),
                                 ),
                               ),
                             ),
@@ -277,6 +315,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
     required IconData icon,
     required String label,
     required String value,
+    required bool isDark,
     Color? valueColor,
   }) {
     return Row(
@@ -297,7 +336,12 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF737685)),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF737685),
+                ),
               ),
               const SizedBox(height: 2),
               Text(
@@ -305,7 +349,9 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: valueColor ?? const Color(0xFF191c1e),
+                  color:
+                      valueColor ??
+                      (isDark ? Colors.white : const Color(0xFF191c1e)),
                 ),
               ),
             ],
@@ -316,6 +362,8 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
   }
 
   Widget _buildPengumpulanCard() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     final pengumpulan = widget.tugas.pengumpulan;
     if (pengumpulan == null) return const SizedBox();
 
@@ -323,11 +371,11 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF003d9b).withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -344,12 +392,12 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                 size: 24,
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Tugas Sudah Dikumpulkan',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF191c1e),
+                  color: isDark ? Colors.white : const Color(0xFF191c1e),
                 ),
               ),
             ],
@@ -358,13 +406,14 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
           _buildInfoRow(
             'Tanggal Upload',
             DateFormat('d MMMM yyyy, HH:mm').format(pengumpulan.tanggalUpload),
+            isDark,
           ),
           if (pengumpulan.sudahDinilai) ...[
             const SizedBox(height: 12),
-            _buildInfoRow('Nilai', '${pengumpulan.nilai}/100'),
+            _buildInfoRow('Nilai', '${pengumpulan.nilai}/100', isDark),
             if (pengumpulan.catatan != null) ...[
               const SizedBox(height: 12),
-              _buildInfoRow('Catatan', pengumpulan.catatan!),
+              _buildInfoRow('Catatan', pengumpulan.catatan!, isDark),
             ],
           ],
           const SizedBox(height: 16),
@@ -387,15 +436,18 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
   }
 
   Widget _buildUploadSection() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF003d9b).withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -404,12 +456,12 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Upload Jawaban',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF191c1e),
+              color: isDark ? Colors.white : const Color(0xFF191c1e),
             ),
           ),
           const SizedBox(height: 16),
@@ -421,12 +473,16 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8F9FB),
+                color: isDark
+                    ? const Color(0xFF111827)
+                    : const Color(0xFFF8F9FB),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: _selectedFile != null
                       ? const Color(0xFF003d9b)
-                      : const Color(0xFFe1e2e4),
+                      : (isDark
+                            ? const Color(0xFF374151)
+                            : const Color(0xFFe1e2e4)),
                   width: _selectedFile != null ? 2 : 1,
                 ),
               ),
@@ -439,7 +495,9 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                     size: 48,
                     color: _selectedFile != null
                         ? const Color(0xFF10B981)
-                        : const Color(0xFF737685),
+                        : (isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF737685)),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -452,8 +510,10 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                           ? FontWeight.w600
                           : FontWeight.w400,
                       color: _selectedFile != null
-                          ? const Color(0xFF191c1e)
-                          : const Color(0xFF737685),
+                          ? (isDark ? Colors.white : const Color(0xFF191c1e))
+                          : (isDark
+                                ? const Color(0xFF9CA3AF)
+                                : const Color(0xFF737685)),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -513,7 +573,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, bool isDark) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -521,17 +581,25 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
           width: 100,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 14, color: Color(0xFF737685)),
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF737685),
+            ),
           ),
         ),
-        const Text(': ', style: TextStyle(color: Color(0xFF737685))),
+        Text(
+          ': ',
+          style: TextStyle(
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF737685),
+          ),
+        ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF191c1e),
+              color: isDark ? Colors.white : const Color(0xFF191c1e),
             ),
           ),
         ),
