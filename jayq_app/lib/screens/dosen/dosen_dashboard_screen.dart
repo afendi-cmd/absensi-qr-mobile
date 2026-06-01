@@ -11,6 +11,7 @@ import 'mata_kuliah_list_screen.dart';
 import 'tugas_list_screen.dart';
 import 'materi_list_screen.dart';
 import 'rekap_kehadiran_screen.dart';
+import 'pengumuman_dosen_screen.dart';
 
 class DosenDashboardScreen extends StatefulWidget {
   const DosenDashboardScreen({super.key});
@@ -110,7 +111,14 @@ class _DosenDashboardScreenState extends State<DosenDashboardScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.notifications_outlined),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PengumumanDosenScreen(),
+                        ),
+                      );
+                    },
                     color: const Color(0xFF003d9b),
                   ),
                 ],
