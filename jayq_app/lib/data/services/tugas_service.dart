@@ -1,102 +1,190 @@
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import '../models/tugas_model.dart';
-import 'api_service.dart';
+import 'package:dio/dio.dart';
 import 'storage_service.dart';
-import '../../core/constants/app_constants.dart';
 
 class TugasService {
-  final ApiService _apiService = ApiService();
+  final Dio _dio;
   final StorageService _storageService = StorageService();
+  final String baseUrl = 'http://192.168.1.9:8000/api';
 
-  // Get tugas untuk mahasiswa
-  Future<List<TugasModel>> getTugasMahasiswa({int? mataKuliahId}) async {
-    try {
-      String endpoint = '/tugas/mahasiswa';
-      if (mataKuliahId != null) {
-        endpoint += '?mata_kuliah_id=$mataKuliahId';
-      }
-
-      final response = await _apiService.get(endpoint);
-
-      if (response['success'] == true) {
-        final List<dynamic> data = response['data'];
-        return data.map((json) => TugasModel.fromJson(json)).toList();
-      } else {
-        throw Exception(response['message'] ?? 'Gagal memuat data tugas');
-      }
-    } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
-    }
+  TugasService() : _dio = Dio() {
+    _dio.options.baseUrl = baseUrl;
+    _dio.options.headers['Accept'] = 'application/json';
   }
 
-  // Get single tugas
-  Future<TugasModel> getTugasById(int id) async {
-    try {
-      final response = await _apiService.get('/tugas/$id');
-
-      if (response['success'] == true) {
-        return TugasModel.fromJson(response['data']);
-      } else {
-        throw Exception(response['message'] ?? 'Gagal memuat detail tugas');
-      }
-    } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
-    }
-  }
-
-  // Upload tugas (submit assignment)
-  Future<void> uploadTugas(int tugasId, File file) async {
+  Future<List<Map<String, dynamic>>> getTugasDosen({int? mataKuliahId}) async {
     try {
       final token = await _storageService.getToken();
-      if (token == null) {
-        throw Exception('Token tidak ditemukan');
+
+      final queryParams = <String, dynamic>{};
+      if (mataKuliahId != null) {
+        queryParams['mata_kuliah_id'] = mataKuliahId;
       }
 
-      final uri = Uri.parse('${AppConstants.baseUrl}/tugas/upload');
-      final request = http.MultipartRequest('POST', uri);
-
-      request.headers['Authorization'] = 'Bearer $token';
-      request.headers['Accept'] = 'application/json';
-
-      request.fields['tugas_id'] = tugasId.toString();
-
-      request.files.add(
-        await http.MultipartFile.fromPath('file_jawaban', file.path),
+      final response = await _dio.get(
+        '/tugas',
+        queryParameters: queryParams,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return;
+      if (response.data['success']) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
       } else {
-        throw Exception('Gagal mengupload tugas');
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
       }
     } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+      throw Exception('Gagal mengambil data tugas: $e');
     }
   }
 
-  // Get pengumpulan tugas mahasiswa
-  Future<List<PengumpulanTugas>> getPengumpulanMahasiswa() async {
+  Future<Map<String, dynamic>> createTugas({
+    required int mataKuliahId,
+    required String judul,
+    String? deskripsi,
+    required String deadline,
+    String? filePath,
+  }) async {
     try {
-      final response = await _apiService.get('/tugas/pengumpulan/mahasiswa');
+      final token = await _storageService.getToken();
 
-      if (response['success'] == true) {
-        final List<dynamic> data = response['data'];
-        return data.map((json) => PengumpulanTugas.fromJson(json)).toList();
+      FormData formData = FormData.fromMap({
+        'mata_kuliah_id': mataKuliahId,
+        'judul': judul,
+        'deskripsi': deskripsi ?? '',
+        'deadline': deadline,
+      });
+
+      if (filePath != null) {
+        formData.files.add(
+          MapEntry('file_tugas', await MultipartFile.fromFile(filePath)),
+        );
+      }
+
+      final response = await _dio.post(
+        '/tugas',
+        data: formData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.data['success']) {
+        return response.data['data'];
       } else {
-        throw Exception(response['message'] ?? 'Gagal memuat data pengumpulan');
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
       }
     } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+      throw Exception('Gagal membuat tugas: $e');
     }
   }
 
-  // Get download URL for tugas file
-  String getDownloadUrl(String filePath) {
-    final cleanPath = filePath.replaceFirst('public/', '');
-    return '${AppConstants.baseUrl.replaceAll('/api', '')}/storage/$cleanPath';
+  Future<Map<String, dynamic>> getTugasDetail(int tugasId) async {
+    try {
+      final token = await _storageService.getToken();
+
+      final response = await _dio.get(
+        '/tugas/$tugasId',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.data['success']) {
+        return response.data['data'];
+      } else {
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Gagal mengambil detail tugas: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getPengumpulan(int tugasId) async {
+    try {
+      final token = await _storageService.getToken();
+
+      final response = await _dio.get(
+        '/tugas/$tugasId/pengumpulan',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.data['success']) {
+        return response.data['data'];
+      } else {
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Gagal mengambil data pengumpulan: $e');
+    }
+  }
+
+  Future<void> beriNilai({
+    required int pengumpulanId,
+    required int nilai,
+    String? catatan,
+  }) async {
+    try {
+      final token = await _storageService.getToken();
+
+      final response = await _dio.post(
+        '/tugas/pengumpulan/$pengumpulanId/nilai',
+        data: {'nilai': nilai, 'catatan': catatan},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (!response.data['success']) {
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Gagal memberi nilai: $e');
+    }
+  }
+
+  Future<void> deleteTugas(int tugasId) async {
+    try {
+      final token = await _storageService.getToken();
+
+      final response = await _dio.delete(
+        '/tugas/$tugasId',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (!response.data['success']) {
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Gagal menghapus tugas: $e');
+    }
   }
 }
