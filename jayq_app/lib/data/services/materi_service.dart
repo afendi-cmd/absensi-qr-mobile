@@ -1,50 +1,143 @@
-import '../models/materi_model.dart';
-import 'api_service.dart';
-import '../../core/constants/app_constants.dart';
+import 'package:dio/dio.dart';
+import 'storage_service.dart';
 
 class MateriService {
-  final ApiService _apiService = ApiService();
+  final Dio _dio;
+  final StorageService _storageService = StorageService();
+  final String baseUrl = 'http://192.168.1.9:8000/api';
 
-  // Get materi untuk mahasiswa
-  Future<List<MateriModel>> getMateriMahasiswa({int? mataKuliahId}) async {
+  MateriService() : _dio = Dio() {
+    _dio.options.baseUrl = baseUrl;
+    _dio.options.headers['Accept'] = 'application/json';
+  }
+
+  Future<List<Map<String, dynamic>>> getMateriDosen({int? mataKuliahId}) async {
     try {
-      String endpoint = '/materi/mahasiswa';
+      final token = await _storageService.getToken();
+
+      final queryParams = <String, dynamic>{};
       if (mataKuliahId != null) {
-        endpoint += '?mata_kuliah_id=$mataKuliahId';
+        queryParams['mata_kuliah_id'] = mataKuliahId;
       }
 
-      final response = await _apiService.get(endpoint);
+      final response = await _dio.get(
+        '/materi',
+        queryParameters: queryParams,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
 
-      if (response['success'] == true) {
-        final List<dynamic> data = response['data'];
-        return data.map((json) => MateriModel.fromJson(json)).toList();
+      if (response.data['success']) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
       } else {
-        throw Exception(response['message'] ?? 'Gagal memuat data materi');
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
       }
     } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+      throw Exception('Gagal mengambil data materi: $e');
     }
   }
 
-  // Get single materi
-  Future<MateriModel> getMateriById(int id) async {
+  Future<Map<String, dynamic>> uploadMateri({
+    required int mataKuliahId,
+    required String judul,
+    String? deskripsi,
+    required String filePath,
+  }) async {
     try {
-      final response = await _apiService.get('/materi/$id');
+      final token = await _storageService.getToken();
 
-      if (response['success'] == true) {
-        return MateriModel.fromJson(response['data']);
+      FormData formData = FormData.fromMap({
+        'mata_kuliah_id': mataKuliahId,
+        'judul': judul,
+        'deskripsi': deskripsi ?? '',
+        'file_materi': await MultipartFile.fromFile(filePath),
+      });
+
+      final response = await _dio.post(
+        '/materi',
+        data: formData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.data['success']) {
+        return response.data['data'];
       } else {
-        throw Exception(response['message'] ?? 'Gagal memuat detail materi');
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
       }
     } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+      throw Exception('Gagal upload materi: $e');
     }
   }
 
-  // Get download URL for materi file
+  Future<void> deleteMateri(int materiId) async {
+    try {
+      final token = await _storageService.getToken();
+
+      final response = await _dio.delete(
+        '/materi/$materiId',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (!response.data['success']) {
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Gagal menghapus materi: $e');
+    }
+  }
+
+  // For Mahasiswa
+  Future<List<Map<String, dynamic>>> getMateriMahasiswa({
+    int? mataKuliahId,
+  }) async {
+    try {
+      final token = await _storageService.getToken();
+
+      final queryParams = <String, dynamic>{};
+      if (mataKuliahId != null) {
+        queryParams['mata_kuliah_id'] = mataKuliahId;
+      }
+
+      final response = await _dio.get(
+        '/materi/mahasiswa',
+        queryParameters: queryParams,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.data['success']) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      } else {
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Gagal mengambil data materi: $e');
+    }
+  }
+
   String getDownloadUrl(String filePath) {
-    // Remove 'public/' prefix if exists
-    final cleanPath = filePath.replaceFirst('public/', '');
-    return '${AppConstants.baseUrl.replaceAll('/api', '')}/storage/$cleanPath';
+    return '$baseUrl/storage/$filePath';
   }
 }

@@ -187,4 +187,76 @@ class TugasService {
       throw Exception('Gagal menghapus tugas: $e');
     }
   }
+
+  // For Mahasiswa
+  Future<List<Map<String, dynamic>>> getTugasMahasiswa({
+    int? mataKuliahId,
+  }) async {
+    try {
+      final token = await _storageService.getToken();
+
+      final queryParams = <String, dynamic>{};
+      if (mataKuliahId != null) {
+        queryParams['mata_kuliah_id'] = mataKuliahId;
+      }
+
+      final response = await _dio.get(
+        '/tugas/mahasiswa',
+        queryParameters: queryParams,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.data['success']) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      } else {
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Gagal mengambil data tugas: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadTugas({
+    required int tugasId,
+    required String filePath,
+  }) async {
+    try {
+      final token = await _storageService.getToken();
+
+      FormData formData = FormData.fromMap({
+        'tugas_id': tugasId,
+        'file_jawaban': await MultipartFile.fromFile(filePath),
+      });
+
+      final response = await _dio.post(
+        '/tugas/upload',
+        data: formData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.data['success']) {
+        return response.data['data'];
+      } else {
+        throw Exception(response.data['message']);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message'] ?? 'Server error');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Gagal upload tugas: $e');
+    }
+  }
+
+  String getDownloadUrl(String filePath) {
+    return '$baseUrl/storage/$filePath';
+  }
 }

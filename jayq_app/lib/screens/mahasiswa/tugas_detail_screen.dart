@@ -9,9 +9,14 @@ import '../../data/models/tugas_model.dart';
 import '../../data/services/tugas_service.dart';
 
 class TugasDetailScreen extends StatefulWidget {
-  final TugasModel tugas;
+  final Map<String, dynamic>? tugasData;
+  final TugasModel? tugas;
 
-  const TugasDetailScreen({super.key, required this.tugas});
+  const TugasDetailScreen({super.key, this.tugasData, this.tugas})
+    : assert(
+        tugasData != null || tugas != null,
+        'Either tugasData or tugas must be provided',
+      );
 
   @override
   State<TugasDetailScreen> createState() => _TugasDetailScreenState();
@@ -22,15 +27,57 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
   bool _isUploading = false;
   File? _selectedFile;
 
+  // Helper getters to work with both Map and Model
+  int get _tugasId => widget.tugasData?['id'] ?? widget.tugas!.id;
+  String get _judul => widget.tugasData?['judul'] ?? widget.tugas!.judul;
+  String? get _deskripsi =>
+      widget.tugasData?['deskripsi'] ?? widget.tugas?.deskripsi;
+  String? get _fileTugas =>
+      widget.tugasData?['file_tugas'] ?? widget.tugas?.fileTugas;
+  DateTime get _deadline => widget.tugasData != null
+      ? DateTime.parse(widget.tugasData!['deadline'])
+      : widget.tugas!.deadline;
+  bool get _sudahDikumpulkan =>
+      widget.tugasData?['sudah_dikumpulkan'] ?? widget.tugas!.sudahDikumpulkan;
+  bool get _isOverdue => _deadline.isBefore(DateTime.now());
+  String get _namaMk =>
+      widget.tugasData?['mata_kuliah']?['nama_mk'] ??
+      widget.tugas?.mataKuliah?.namaMk ??
+      '-';
+
+  String get _statusLabel {
+    if (_sudahDikumpulkan) return 'Sudah Dikumpulkan';
+    if (_isOverdue) return 'Terlambat';
+    return 'Belum Dikumpulkan';
+  }
+
+  String get _formattedDeadline {
+    final now = DateTime.now();
+    final difference = _deadline.difference(now);
+
+    if (difference.isNegative) {
+      return 'Terlambat ${difference.inDays.abs()} hari';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} hari lagi';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} jam lagi';
+    } else {
+      return '${difference.inMinutes} menit lagi';
+    }
+  }
+
+  Map<String, dynamic>? get _pengumpulanData =>
+      widget.tugasData?['pengumpulan'];
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
     Color statusColor;
 
-    if (widget.tugas.sudahDikumpulkan) {
+    if (_sudahDikumpulkan) {
       statusColor = const Color(0xFF10B981);
-    } else if (widget.tugas.isOverdue) {
+    } else if (_isOverdue) {
       statusColor = const Color(0xFFDC2626);
     } else {
       statusColor = const Color(0xFFF59E0B);
@@ -88,7 +135,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      widget.tugas.statusLabel.toUpperCase(),
+                      _statusLabel.toUpperCase(),
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -100,7 +147,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
 
                   // Title
                   Text(
-                    widget.tugas.judul,
+                    _judul,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -132,7 +179,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                   _buildMetaRow(
                     icon: Icons.book_outlined,
                     label: 'Mata Kuliah',
-                    value: widget.tugas.mataKuliah?.namaMk ?? '-',
+                    value: _namaMk,
                     isDark: isDark,
                   ),
                   Divider(
@@ -146,7 +193,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                     label: 'Deadline',
                     value: DateFormat(
                       'EEEE, d MMMM yyyy HH:mm',
-                    ).format(widget.tugas.deadline),
+                    ).format(_deadline),
                     isDark: isDark,
                   ),
                   Divider(
@@ -158,10 +205,8 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                   _buildMetaRow(
                     icon: Icons.access_time_outlined,
                     label: 'Sisa Waktu',
-                    value: widget.tugas.formattedDeadline,
-                    valueColor: widget.tugas.isOverdue
-                        ? const Color(0xFFDC2626)
-                        : null,
+                    value: _formattedDeadline,
+                    valueColor: _isOverdue ? const Color(0xFFDC2626) : null,
                     isDark: isDark,
                   ),
                 ],
@@ -171,7 +216,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
             const SizedBox(height: 16),
 
             // Description Card
-            if (widget.tugas.deskripsi != null) ...[
+            if (_deskripsi != null && _deskripsi!.isNotEmpty) ...[
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(20),
@@ -201,7 +246,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      widget.tugas.deskripsi!,
+                      _deskripsi!,
                       style: TextStyle(
                         fontSize: 15,
                         color: isDark
@@ -217,7 +262,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
             ],
 
             // File Tugas (if exists)
-            if (widget.tugas.fileTugas != null) ...[
+            if (_fileTugas != null) ...[
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
@@ -247,7 +292,7 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
                     ),
                     const SizedBox(height: 12),
                     InkWell(
-                      onTap: () => _downloadFile(widget.tugas.fileTugas!),
+                      onTap: () => _downloadFile(_fileTugas!),
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         padding: const EdgeInsets.all(12),
@@ -298,9 +343,9 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
             ],
 
             // Pengumpulan Section
-            if (widget.tugas.sudahDikumpulkan) ...[
+            if (_sudahDikumpulkan) ...[
               _buildPengumpulanCard(),
-            ] else if (!widget.tugas.isOverdue) ...[
+            ] else if (!_isOverdue) ...[
               _buildUploadSection(),
             ],
 
@@ -364,8 +409,27 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
   Widget _buildPengumpulanCard() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
-    final pengumpulan = widget.tugas.pengumpulan;
-    if (pengumpulan == null) return const SizedBox();
+
+    // Handle both Map and Model
+    if (_pengumpulanData == null && widget.tugas?.pengumpulan == null) {
+      return const SizedBox();
+    }
+
+    final tanggalUpload = _pengumpulanData != null
+        ? DateTime.parse(_pengumpulanData!['tanggal_upload'])
+        : widget.tugas!.pengumpulan!.tanggalUpload;
+    final sudahDinilai = _pengumpulanData != null
+        ? (_pengumpulanData!['sudah_dinilai'] ?? false)
+        : widget.tugas!.pengumpulan!.sudahDinilai;
+    final nilai = _pengumpulanData != null
+        ? _pengumpulanData!['nilai']
+        : widget.tugas!.pengumpulan!.nilai;
+    final catatan = _pengumpulanData != null
+        ? _pengumpulanData!['catatan']
+        : widget.tugas!.pengumpulan!.catatan;
+    final fileJawaban = _pengumpulanData != null
+        ? _pengumpulanData!['file_jawaban']
+        : widget.tugas!.pengumpulan!.fileJawaban;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -405,22 +469,22 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
           const SizedBox(height: 16),
           _buildInfoRow(
             'Tanggal Upload',
-            DateFormat('d MMMM yyyy, HH:mm').format(pengumpulan.tanggalUpload),
+            DateFormat('d MMMM yyyy, HH:mm').format(tanggalUpload),
             isDark,
           ),
-          if (pengumpulan.sudahDinilai) ...[
+          if (sudahDinilai) ...[
             const SizedBox(height: 12),
-            _buildInfoRow('Nilai', '${pengumpulan.nilai}/100', isDark),
-            if (pengumpulan.catatan != null) ...[
+            _buildInfoRow('Nilai', '$nilai/100', isDark),
+            if (catatan != null) ...[
               const SizedBox(height: 12),
-              _buildInfoRow('Catatan', pengumpulan.catatan!, isDark),
+              _buildInfoRow('Catatan', catatan, isDark),
             ],
           ],
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => _downloadFile(pengumpulan.fileJawaban),
+              onPressed: () => _downloadFile(fileJawaban),
               icon: const Icon(Icons.download),
               label: const Text('Download File Jawaban'),
               style: OutlinedButton.styleFrom(
@@ -637,7 +701,10 @@ class _TugasDetailScreenState extends State<TugasDetailScreen> {
     setState(() => _isUploading = true);
 
     try {
-      await _tugasService.uploadTugas(widget.tugas.id, _selectedFile!);
+      await _tugasService.uploadTugas(
+        tugasId: _tugasId,
+        filePath: _selectedFile!.path,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

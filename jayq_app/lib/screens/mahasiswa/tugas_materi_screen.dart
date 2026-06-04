@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
-import '../../data/models/tugas_model.dart';
-import '../../data/models/materi_model.dart';
 import '../../data/services/tugas_service.dart';
 import '../../data/services/materi_service.dart';
 import 'tugas_detail_screen.dart';
@@ -21,8 +19,8 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
   final _tugasService = TugasService();
   final _materiService = MateriService();
 
-  List<TugasModel> _tugasList = [];
-  List<MateriModel> _materiList = [];
+  List<Map<String, dynamic>> _tugasList = [];
+  List<Map<String, dynamic>> _materiList = [];
   bool _isLoadingTugas = false;
   bool _isLoadingMateri = false;
   String? _errorTugas;
@@ -218,16 +216,20 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
     );
   }
 
-  Widget _buildTugasCard(TugasModel tugas) {
+  Widget _buildTugasCard(Map<String, dynamic> tugas) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
     Color statusColor;
     Color statusBgColor;
 
-    if (tugas.sudahDikumpulkan) {
+    final sudahDikumpulkan = tugas['sudah_dikumpulkan'] ?? false;
+    final deadline = DateTime.parse(tugas['deadline']);
+    final isOverdue = deadline.isBefore(DateTime.now());
+
+    if (sudahDikumpulkan) {
       statusColor = const Color(0xFF10B981);
       statusBgColor = const Color(0xFFD1FAE5);
-    } else if (tugas.isOverdue) {
+    } else if (isOverdue) {
       statusColor = const Color(0xFFDC2626);
       statusBgColor = const Color(0xFFFEE2E2);
     } else {
@@ -264,7 +266,7 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
                 children: [
                   Expanded(
                     child: Text(
-                      tugas.mataKuliah?.namaMk ?? 'Mata Kuliah',
+                      tugas['mata_kuliah']?['nama_mk'] ?? 'Mata Kuliah',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -282,7 +284,9 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      tugas.statusLabel,
+                      sudahDikumpulkan
+                          ? 'Sudah Dikumpulkan'
+                          : (isOverdue ? 'Terlambat' : 'Belum Dikumpulkan'),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -296,7 +300,7 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
 
               // Title
               Text(
-                tugas.judul,
+                tugas['judul'] ?? '',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -305,10 +309,11 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (tugas.deskripsi != null) ...[
+              if (tugas['deskripsi'] != null &&
+                  tugas['deskripsi'].toString().isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
-                  tugas.deskripsi!,
+                  tugas['deskripsi'],
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark
@@ -327,7 +332,7 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
                   Icon(
                     Icons.access_time,
                     size: 16,
-                    color: tugas.isOverdue
+                    color: isOverdue
                         ? const Color(0xFFDC2626)
                         : (isDark
                               ? const Color(0xFF9CA3AF)
@@ -335,11 +340,11 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Deadline: ${tugas.formattedDeadline}',
+                    'Deadline: ${deadline.day}/${deadline.month}/${deadline.year}',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: tugas.isOverdue
+                      color: isOverdue
                           ? const Color(0xFFDC2626)
                           : (isDark
                                 ? const Color(0xFF9CA3AF)
@@ -355,7 +360,7 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
     );
   }
 
-  Widget _buildMateriCard(MateriModel materi) {
+  Widget _buildMateriCard(Map<String, dynamic> materi) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
 
@@ -404,7 +409,7 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      materi.mataKuliah?.namaMk ?? 'Mata Kuliah',
+                      materi['mata_kuliah']?['nama_mk'] ?? 'Mata Kuliah',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -413,7 +418,7 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      materi.judul,
+                      materi['judul'] ?? '',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -424,7 +429,7 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      materi.formattedDate,
+                      _formatDate(materi['created_at']),
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark
@@ -451,7 +456,7 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
                   ),
                 ),
                 child: Text(
-                  materi.fileExtension,
+                  _getFileExtension(materi['file_materi']),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -510,10 +515,12 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
     );
   }
 
-  Future<void> _navigateToTugasDetail(TugasModel tugas) async {
+  Future<void> _navigateToTugasDetail(Map<String, dynamic> tugas) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => TugasDetailScreen(tugas: tugas)),
+      MaterialPageRoute(
+        builder: (context) => TugasDetailScreen(tugasData: tugas),
+      ),
     );
 
     // Reload if tugas was submitted
@@ -522,12 +529,31 @@ class _TugasMateriScreenState extends State<TugasMateriScreen>
     }
   }
 
-  Future<void> _navigateToMateriDetail(MateriModel materi) async {
+  Future<void> _navigateToMateriDetail(Map<String, dynamic> materi) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MateriDetailScreen(materi: materi),
+        builder: (context) => MateriDetailScreen(materiData: materi),
       ),
     );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null) return '';
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  String _getFileExtension(String? filePath) {
+    if (filePath == null) return '';
+    final parts = filePath.split('.');
+    if (parts.length > 1) {
+      return parts.last.toUpperCase();
+    }
+    return '';
   }
 }

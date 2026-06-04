@@ -10,6 +10,7 @@ import 'providers/dashboard_provider.dart';
 import 'providers/dashboard_dosen_provider.dart';
 import 'providers/qr_provider.dart';
 import 'providers/tugas_provider.dart';
+import 'providers/materi_provider.dart';
 import 'providers/peserta_mk_provider.dart';
 import 'routes/app_routes.dart';
 import 'screens/splash/splash_screen.dart';
@@ -79,6 +80,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DashboardDosenProvider()),
         ChangeNotifierProvider(create: (_) => QrProvider()),
         ChangeNotifierProvider(create: (_) => TugasProvider()),
+        ChangeNotifierProvider(create: (_) => MateriProvider()),
         ChangeNotifierProvider(create: (_) => PesertaMkProvider()),
       ],
       child: Consumer<ThemeProvider>(

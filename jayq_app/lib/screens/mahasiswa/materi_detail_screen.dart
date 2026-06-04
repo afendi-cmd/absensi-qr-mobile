@@ -7,9 +7,38 @@ import '../../data/models/materi_model.dart';
 import '../../data/services/materi_service.dart';
 
 class MateriDetailScreen extends StatelessWidget {
-  final MateriModel materi;
+  final Map<String, dynamic>? materiData;
+  final MateriModel? materi;
 
-  const MateriDetailScreen({super.key, required this.materi});
+  const MateriDetailScreen({super.key, this.materiData, this.materi})
+    : assert(
+        materiData != null || materi != null,
+        'Either materiData or materi must be provided',
+      );
+
+  // Helper getters
+  String get _judul => materiData?['judul'] ?? materi!.judul;
+  String? get _deskripsi => materiData?['deskripsi'] ?? materi?.deskripsi;
+  String get _fileMateri => materiData?['file_materi'] ?? materi!.fileMateri;
+  String get _namaMk =>
+      materiData?['mata_kuliah']?['nama_mk'] ??
+      materi?.mataKuliah?.namaMk ??
+      '-';
+  String get _kodeMk =>
+      materiData?['mata_kuliah']?['kode_mk'] ??
+      materi?.mataKuliah?.kodeMk ??
+      '-';
+  DateTime get _createdAt => materiData != null
+      ? DateTime.parse(materiData!['created_at'])
+      : materi!.createdAt;
+
+  String get _fileExtension {
+    final parts = _fileMateri.split('.');
+    if (parts.length > 1) {
+      return parts.last.toUpperCase();
+    }
+    return 'FILE';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +107,7 @@ class MateriDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          materi.fileExtension,
+                          _fileExtension,
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -92,7 +121,7 @@ class MateriDetailScreen extends StatelessWidget {
 
                   // Title
                   Text(
-                    materi.judul,
+                    _judul,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -124,7 +153,7 @@ class MateriDetailScreen extends StatelessWidget {
                   _buildMetaRow(
                     icon: Icons.book_outlined,
                     label: 'Mata Kuliah',
-                    value: materi.mataKuliah?.namaMk ?? '-',
+                    value: _namaMk,
                     isDark: isDark,
                   ),
                   Divider(
@@ -136,7 +165,7 @@ class MateriDetailScreen extends StatelessWidget {
                   _buildMetaRow(
                     icon: Icons.code_outlined,
                     label: 'Kode MK',
-                    value: materi.mataKuliah?.kodeMk ?? '-',
+                    value: _kodeMk,
                     isDark: isDark,
                   ),
                   Divider(
@@ -148,9 +177,7 @@ class MateriDetailScreen extends StatelessWidget {
                   _buildMetaRow(
                     icon: Icons.calendar_today_outlined,
                     label: 'Tanggal Upload',
-                    value: DateFormat(
-                      'EEEE, d MMMM yyyy',
-                    ).format(materi.createdAt),
+                    value: DateFormat('EEEE, d MMMM yyyy').format(_createdAt),
                     isDark: isDark,
                   ),
                 ],
@@ -160,7 +187,7 @@ class MateriDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Description Card
-            if (materi.deskripsi != null && materi.deskripsi!.isNotEmpty) ...[
+            if (_deskripsi != null && _deskripsi!.isNotEmpty) ...[
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(20),
@@ -190,7 +217,7 @@ class MateriDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      materi.deskripsi!,
+                      _deskripsi!,
                       style: TextStyle(
                         fontSize: 15,
                         color: isDark
@@ -287,7 +314,7 @@ class MateriDetailScreen extends StatelessWidget {
     MateriService materiService,
   ) async {
     try {
-      final url = materiService.getDownloadUrl(materi.fileMateri);
+      final url = materiService.getDownloadUrl(_fileMateri);
       final uri = Uri.parse(url);
 
       if (await canLaunchUrl(uri)) {
