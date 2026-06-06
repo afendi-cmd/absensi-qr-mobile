@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 
-class CreateTugasScreen extends StatefulWidget {
+class CreateMateriScreen extends StatefulWidget {
   final int mataKuliahId;
 
-  const CreateTugasScreen({super.key, required this.mataKuliahId});
+  const CreateMateriScreen({super.key, required this.mataKuliahId});
 
   @override
-  State<CreateTugasScreen> createState() => _CreateTugasScreenState();
+  State<CreateMateriScreen> createState() => _CreateMateriScreenState();
 }
 
-class _CreateTugasScreenState extends State<CreateTugasScreen> {
+class _CreateMateriScreenState extends State<CreateMateriScreen> {
   final _formKey = GlobalKey<FormState>();
   final _judulController = TextEditingController();
   final _deskripsiController = TextEditingController();
-  DateTime? _selectedDeadline;
+  String? _selectedFileName;
 
   @override
   void dispose() {
@@ -24,36 +24,11 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
     super.dispose();
   }
 
-  Future<void> _selectDeadline() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-
-    if (date != null) {
-      final time = await showTimePicker(
-        context: context,
-        initialTime: const TimeOfDay(hour: 23, minute: 59),
-      );
-
-      if (time != null) {
-        setState(() {
-          _selectedDeadline = DateTime(
-            date.year,
-            date.month,
-            date.day,
-            time.hour,
-            time.minute,
-          );
-        });
-      }
-    }
-  }
-
   Future<void> _pickFile() async {
     // TODO: Implement file picker dengan file_picker package
+    setState(() {
+      _selectedFileName = 'contoh_materi.pdf';
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Fitur upload file akan segera tersedia'),
@@ -62,13 +37,23 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
     );
   }
 
-  void _saveTugas() {
+  void _saveMateri() {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement save tugas ke backend
+      if (_selectedFileName == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Silakan pilih file materi terlebih dahulu'),
+            backgroundColor: Color(0xFFF59E0B),
+          ),
+        );
+        return;
+      }
+
+      // TODO: Implement save materi ke backend
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Tugas berhasil dibuat!'),
+          content: Text('Materi berhasil diunggah!'),
           backgroundColor: Color(0xFF10B981),
         ),
       );
@@ -85,7 +70,7 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
           ? const Color(0xFF111827)
           : const Color(0xFFF8F9FB),
       appBar: AppBar(
-        title: const Text('Buat Tugas Baru'),
+        title: const Text('Upload Materi'),
         backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
         foregroundColor: isDark ? Colors.white : const Color(0xFF003d9b),
         elevation: 0,
@@ -97,12 +82,44 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Judul Tugas
+              // Info
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF003d9b).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF003d9b).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: const Color(0xFF003d9b),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Upload materi pembelajaran berupa dokumen, presentasi, atau video',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: const Color(0xFF003d9b),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Judul Materi
               TextFormField(
                 controller: _judulController,
                 decoration: InputDecoration(
-                  labelText: 'Judul Tugas *',
-                  hintText: 'Masukkan judul tugas',
+                  labelText: 'Judul Materi *',
+                  hintText: 'Masukkan judul materi',
                   filled: true,
                   fillColor: isDark ? const Color(0xFF1F2937) : Colors.white,
                   border: OutlineInputBorder(
@@ -114,7 +131,7 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Judul tugas tidak boleh kosong';
+                    return 'Judul materi tidak boleh kosong';
                   }
                   return null;
                 },
@@ -126,7 +143,7 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
                 controller: _deskripsiController,
                 decoration: InputDecoration(
                   labelText: 'Deskripsi *',
-                  hintText: 'Masukkan deskripsi tugas',
+                  hintText: 'Masukkan deskripsi materi',
                   filled: true,
                   fillColor: isDark ? const Color(0xFF1F2937) : Colors.white,
                   border: OutlineInputBorder(
@@ -136,7 +153,7 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
                 style: TextStyle(
                   color: isDark ? Colors.white : const Color(0xFF191c1e),
                 ),
-                maxLines: 5,
+                maxLines: 4,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Deskripsi tidak boleh kosong';
@@ -146,7 +163,7 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Deadline
+              // File Upload
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -162,7 +179,7 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Deadline *',
+                      'File Materi *',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -170,68 +187,75 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: _selectDeadline,
-                      icon: const Icon(Icons.calendar_today, size: 18),
-                      label: Text(
-                        _selectedDeadline == null
-                            ? 'Pilih Tanggal & Waktu'
-                            : '${_selectedDeadline!.day}/${_selectedDeadline!.month}/${_selectedDeadline!.year} ${_selectedDeadline!.hour}:${_selectedDeadline!.minute.toString().padLeft(2, '0')}',
+
+                    if (_selectedFileName != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(
+                              0xFF10B981,
+                            ).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              color: Color(0xFF10B981),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _selectedFileName!,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF10B981),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _selectedFileName = null;
+                                });
+                              },
+                              icon: const Icon(
+                                Icons.close,
+                                color: Color(0xFF10B981),
+                                size: 18,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF003d9b),
-                        side: const BorderSide(color: Color(0xFF003d9b)),
+                      const SizedBox(height: 12),
+                    ],
+
+                    ElevatedButton.icon(
+                      onPressed: _pickFile,
+                      icon: const Icon(Icons.upload_file, size: 18),
+                      label: Text(
+                        _selectedFileName == null ? 'Pilih File' : 'Ganti File',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF003d9b),
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // File Upload (Opsional)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1F2937) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF374151)
-                        : const Color(0xFFe1e2e4),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'File Lampiran (Opsional)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF191c1e),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: _pickFile,
-                      icon: const Icon(Icons.attach_file, size: 18),
-                      label: const Text('Lampirkan File'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF003d9b),
-                        side: const BorderSide(color: Color(0xFF003d9b)),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Format: PDF, DOC, DOCX (Max 10MB)',
+                      'Format: PDF, DOC, DOCX, PPT, PPTX, MP4 (Max 20MB)',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark
@@ -270,7 +294,7 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _saveTugas,
+                      onPressed: _saveMateri,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF003d9b),
                         foregroundColor: Colors.white,
@@ -279,7 +303,7 @@ class _CreateTugasScreenState extends State<CreateTugasScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Simpan Tugas'),
+                      child: const Text('Upload Materi'),
                     ),
                   ),
                 ],

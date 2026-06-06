@@ -253,9 +253,21 @@ class _TugasListScreenState extends State<TugasListScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          if (_selectedMataKuliahId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Silakan pilih mata kuliah terlebih dahulu'),
+                backgroundColor: Color(0xFFF59E0B),
+              ),
+            );
+            return;
+          }
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const CreateTugasScreen()),
+            MaterialPageRoute(
+              builder: (context) =>
+                  CreateTugasScreen(mataKuliahId: _selectedMataKuliahId!),
+            ),
           );
           if (result == true) {
             _loadTugas();
