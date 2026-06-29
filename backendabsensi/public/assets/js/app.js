@@ -16,6 +16,9 @@
             { key: 'pengumuman', label: 'Pengumuman',    icon: 'megaphone' },
             { key: 'notifikasi', label: 'Notifikasi',    icon: 'bell' },
             { key: 'export',     label: 'Export Data',   icon: 'download' },
+            { key: 'nilai',      label: 'Nilai',         icon: 'star' },
+            { key: 'izin',       label: 'Izin/Sakit',    icon: 'calendar' },
+            { key: 'audit',      label: 'Audit Log',     icon: 'history' },
             { key: 'profile',    label: 'Profil',        icon: 'user' },
         ],
         dosen: [
@@ -23,8 +26,10 @@
             { key: 'matkul',     label: 'Mata Kuliah',   icon: 'book' },
             { key: 'qr',         label: 'Generate QR',   icon: 'qr' },
             { key: 'rekap',      label: 'Rekap Absensi', icon: 'clipboard' },
+            { key: 'nilai',      label: 'Nilai',         icon: 'star' },
             { key: 'tugas',      label: 'Tugas',         icon: 'file' },
             { key: 'materi',     label: 'Materi',        icon: 'book' },
+            { key: 'izin',       label: 'Izin/Sakit',    icon: 'calendar' },
             { key: 'pengumuman', label: 'Pengumuman',    icon: 'megaphone' },
             { key: 'profile',    label: 'Profil',        icon: 'user' },
         ],
@@ -35,6 +40,8 @@
             { key: 'matkul',     label: 'Mata Kuliah',   icon: 'book' },
             { key: 'tugas',      label: 'Tugas',         icon: 'file' },
             { key: 'materi',     label: 'Materi',        icon: 'book' },
+            { key: 'nilai',      label: 'Nilai',         icon: 'star' },
+            { key: 'izin',       label: 'Izin/Sakit',    icon: 'calendar' },
             { key: 'pengumuman', label: 'Pengumuman',    icon: 'megaphone' },
             { key: 'profile',    label: 'Profil',        icon: 'user' },
         ],
@@ -104,6 +111,10 @@
                             <button class="btn btn-ghost btn-sm demo" data-e="budi@jayq.com">Dosen</button>
                             <button class="btn btn-ghost btn-sm demo" data-e="ahmad@jayq.com">Mahasiswa</button>
                         </div>
+                        <div class="flex items-center justify-between mt-4 text-xs">
+                            <button id="li-register" class="text-brand-300 hover:text-brand-200 font-semibold">Daftar akun mahasiswa</button>
+                            <button id="li-forgot" class="text-slate-400 hover:text-white">Lupa password?</button>
+                        </div>
                     </div>
                 </div>
                 <p class="text-center text-xs text-slate-600 mt-6">© ${new Date().getFullYear()} JAYQ Absensi</p>
@@ -114,6 +125,68 @@
             document.getElementById('li-email').value = b.dataset.e;
             document.getElementById('li-pass').value = 'password';
         });
+
+        document.getElementById('li-register').onclick = () => {
+            UI.modal({
+                title: 'Daftar Akun Mahasiswa', size: 'sm',
+                body: `<form id="rg-f" class="space-y-3">
+                    <div><label class="label">Nama</label><input id="rg-nama" class="input" required></div>
+                    <div><label class="label">NIM <span class="text-xs text-slate-500">(opsional)</span></label><input id="rg-nim" class="input"></div>
+                    <div><label class="label">Email</label><input id="rg-email" type="email" class="input" required></div>
+                    <div><label class="label">Password</label><input id="rg-pass" type="password" class="input" placeholder="Min. 6 karakter" required></div>
+                    <div><label class="label">Konfirmasi Password</label><input id="rg-conf" type="password" class="input" required></div>
+                </form>`,
+                footer: `<button class="btn btn-ghost" onclick="UI.closeModal()">Batal</button><button class="btn btn-primary" id="rg-save">Daftar</button>`,
+                onMount: () => {
+                    document.getElementById('rg-save').onclick = async () => {
+                        const g = (id) => document.getElementById(id).value.trim();
+                        const payload = { nama: g('rg-nama'), nim: g('rg-nim') || null, email: g('rg-email'), password: g('rg-pass'), password_confirmation: g('rg-conf') };
+                        const r = await API.post('/register', payload);
+                        if (r.ok && r.data.success) {
+                            API.setAuth(r.data.data.token, r.data.data.user);
+                            UI.closeModal();
+                            UI.toast('success', 'Registrasi berhasil', `Selamat datang, ${r.data.data.user.nama}!`);
+                            location.hash = '#/dashboard';
+                        } else {
+                            const e = r.data.errors ? Object.values(r.data.errors).flat().join(' ') : r.data.message;
+                            UI.toast('error', 'Gagal daftar', e || '');
+                        }
+                    };
+                }
+            });
+        };
+
+        document.getElementById('li-forgot').onclick = () => {
+            UI.modal({
+                title: 'Reset Password', size: 'sm',
+                body: `<div class="space-y-3">
+                    <div><label class="label">Email</label><div class="flex gap-2"><input id="fp-email" type="email" class="input" placeholder="email terdaftar"><button class="btn btn-ghost" id="fp-send">Kirim</button></div></div>
+                    <div id="fp-step2" class="space-y-3 hidden">
+                        <div><label class="label">Token Reset</label><input id="fp-token" class="input"></div>
+                        <div><label class="label">Password Baru</label><input id="fp-pass" type="password" class="input" placeholder="Min. 6 karakter"></div>
+                        <div><label class="label">Konfirmasi</label><input id="fp-conf" type="password" class="input"></div>
+                    </div>
+                </div>`,
+                footer: `<button class="btn btn-ghost" onclick="UI.closeModal()">Tutup</button><button class="btn btn-primary hidden" id="fp-reset">Reset Password</button>`,
+                onMount: () => {
+                    const g = (id) => document.getElementById(id).value.trim();
+                    document.getElementById('fp-send').onclick = async () => {
+                        const r = await API.post('/forgot-password', { email: g('fp-email') });
+                        if (r.ok && r.data.success) {
+                            document.getElementById('fp-token').value = r.data.data.reset_token || '';
+                            document.getElementById('fp-step2').classList.remove('hidden');
+                            document.getElementById('fp-reset').classList.remove('hidden');
+                            UI.toast('info', 'Token dibuat', 'Token otomatis terisi (mode demo). Lanjut reset.');
+                        } else UI.toast('error', 'Gagal', (r.data && r.data.message) || 'Email tidak terdaftar');
+                    };
+                    document.getElementById('fp-reset').onclick = async () => {
+                        const r = await API.post('/reset-password', { email: g('fp-email'), token: g('fp-token'), password: g('fp-pass'), password_confirmation: g('fp-conf') });
+                        if (r.ok && r.data.success) { UI.closeModal(); UI.toast('success', 'Password direset', 'Silakan login dengan password baru.'); }
+                        else { const e = r.data.errors ? Object.values(r.data.errors).flat().join(' ') : r.data.message; UI.toast('error', 'Gagal', e || ''); }
+                    };
+                }
+            });
+        };
 
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();

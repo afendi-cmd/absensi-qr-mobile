@@ -20,7 +20,7 @@ class ExportController extends Controller
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
 
-            $query = Absensi::with(['user:id,nama,nim', 'mataKuliah:id,nama_mk,kode_mk', 'qrSession'])
+            $query = Absensi::with(['mahasiswa:id,nama,nim', 'mataKuliah:id,nama_mk,kode_mk', 'qrSession'])
                 ->orderBy('created_at', 'desc');
 
             if ($mataKuliahId) {
@@ -42,8 +42,8 @@ class ExportController extends Controller
             
             foreach ($absensi as $index => $item) {
                 $csvData .= ($index + 1) . ",";
-                $csvData .= '"' . ($item->user->nim ?? '-') . '",';
-                $csvData .= '"' . ($item->user->nama ?? '-') . '",';
+                $csvData .= '"' . ($item->mahasiswa->nim ?? '-') . '",';
+                $csvData .= '"' . ($item->mahasiswa->nama ?? '-') . '",';
                 $csvData .= '"' . ($item->mataKuliah->nama_mk ?? '-') . '",';
                 $csvData .= '"' . ($item->mataKuliah->kode_mk ?? '-') . '",';
                 $csvData .= '"' . $item->created_at->format('Y-m-d') . '",';
@@ -86,7 +86,7 @@ class ExportController extends Controller
             
             // Get all peserta
             $peserta = PesertaMk::where('mata_kuliah_id', $mataKuliahId)
-                ->with('user:id,nama,nim')
+                ->with('mahasiswa:id,nama,nim')
                 ->get();
 
             // Get total pertemuan
@@ -98,14 +98,14 @@ class ExportController extends Controller
 
             foreach ($peserta as $index => $item) {
                 $totalHadir = Absensi::where('mata_kuliah_id', $mataKuliahId)
-                    ->where('user_id', $item->user_id)
+                    ->where('mahasiswa_id', $item->mahasiswa_id)
                     ->count();
 
                 $persentase = $totalPertemuan > 0 ? round(($totalHadir / $totalPertemuan) * 100, 2) : 0;
 
                 $csvData .= ($index + 1) . ",";
-                $csvData .= '"' . ($item->user->nim ?? '-') . '",';
-                $csvData .= '"' . ($item->user->nama ?? '-') . '",';
+                $csvData .= '"' . ($item->mahasiswa->nim ?? '-') . '",';
+                $csvData .= '"' . ($item->mahasiswa->nama ?? '-') . '",';
                 $csvData .= $totalHadir . ",";
                 $csvData .= $totalPertemuan . ",";
                 $csvData .= $persentase . "%\n";

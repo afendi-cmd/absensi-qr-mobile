@@ -105,7 +105,7 @@ class QrController extends Controller
     {
         $qrSession = QrSession::with([
             'mataKuliah:id,nama_mk,kode_mk',
-            'absensi.user:id,nama,nim'
+            'absensi.mahasiswa:id,nama,nim'
         ])->find($id);
 
         if (!$qrSession) {
@@ -127,9 +127,9 @@ class QrController extends Controller
             return [
                 'id' => $absen->id,
                 'mahasiswa' => [
-                    'id' => $absen->user->id,
-                    'nama' => $absen->user->nama,
-                    'nim' => $absen->user->nim,
+                    'id' => $absen->mahasiswa->id,
+                    'nama' => $absen->mahasiswa->nama,
+                    'nim' => $absen->mahasiswa->nim,
                 ],
                 'waktu_absen' => $absen->created_at->format('Y-m-d H:i:s'),
                 'status' => $absen->status,

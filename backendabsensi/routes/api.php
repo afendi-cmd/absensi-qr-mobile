@@ -14,6 +14,9 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\PengumumanController;
 use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\NilaiController;
+use App\Http\Controllers\Api\IzinSakitController;
+use App\Http\Controllers\Api\AuditLogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +26,9 @@ use App\Http\Controllers\Api\NotificationController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -79,6 +85,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/export/mahasiswa', [ExportController::class, 'exportMahasiswa']);
         Route::get('/export/dosen', [ExportController::class, 'exportDosen']);
         Route::get('/export/mata-kuliah', [ExportController::class, 'exportMataKuliah']);
+
+        // Audit Log
+        Route::get('/audit-logs', [AuditLogController::class, 'index']);
+
+        // Nilai (lihat semua) & Izin/Sakit (lihat semua)
+        Route::get('/nilai', [NilaiController::class, 'index']);
+        Route::get('/izin-sakit/all', [IzinSakitController::class, 'allIndex']);
     });
 
     // ========== ADMIN & DOSEN SHARED ROUTES ==========
@@ -123,6 +136,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Lihat mata kuliah yang diajar
         Route::get('/mata-kuliah/dosen/me', [MataKuliahController::class, 'getMataKuliahDosen']);
+
+        // Nilai (input & kelola)
+        Route::post('/nilai', [NilaiController::class, 'store']);
+        Route::put('/nilai/{id}', [NilaiController::class, 'update']);
+        Route::delete('/nilai/{id}', [NilaiController::class, 'destroy']);
+        Route::get('/nilai/mata-kuliah/{id}', [NilaiController::class, 'getByMataKuliah']);
+
+        // Izin/Sakit (tinjau)
+        Route::get('/izin-sakit', [IzinSakitController::class, 'index']);
+        Route::put('/izin-sakit/{id}/review', [IzinSakitController::class, 'review']);
     });
 
     // ========== MAHASISWA ROUTES ==========
@@ -146,6 +169,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Lihat materi
         Route::get('/materi/mahasiswa/me', [MateriController::class, 'getMateriMahasiswa']);
+
+        // Nilai (transkrip pribadi)
+        Route::get('/nilai/me', [NilaiController::class, 'getMine']);
+
+        // Izin/Sakit (ajukan & lihat milik sendiri)
+        Route::post('/izin-sakit', [IzinSakitController::class, 'store']);
+        Route::get('/izin-sakit/me', [IzinSakitController::class, 'getMine']);
     });
 
     // ========== SHARED ROUTES (All authenticated users) ==========

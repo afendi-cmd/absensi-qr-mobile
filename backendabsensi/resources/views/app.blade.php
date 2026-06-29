@@ -40,7 +40,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <!-- App styles -->
-    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}?v={{ @filemtime(public_path('assets/css/app.css')) }}">
 </head>
 <body class="font-sans antialiased text-slate-100">
 
@@ -70,9 +70,9 @@
             appName: 'JAYQ Absensi'
         };
     </script>
-    <script src="{{ asset('assets/js/api.js') }}"></script>
-    <script src="{{ asset('assets/js/ui.js') }}"></script>
-    <script src="{{ asset('assets/js/app.js') }}"></script>
-    <script src="{{ asset('assets/js/pages.js') }}"></script>
+    <script src="{{ asset('assets/js/api.js') }}?v={{ @filemtime(public_path('assets/js/api.js')) }}"></script>
+    <script src="{{ asset('assets/js/ui.js') }}?v={{ @filemtime(public_path('assets/js/ui.js')) }}"></script>
+    <script src="{{ asset('assets/js/app.js') }}?v={{ @filemtime(public_path('assets/js/app.js')) }}"></script>
+    <script src="{{ asset('assets/js/pages.js') }}?v={{ @filemtime(public_path('assets/js/pages.js')) }}"></script>
 </body>
 </html>

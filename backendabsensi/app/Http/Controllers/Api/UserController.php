@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -42,6 +43,10 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email|max:100',
             'password' => 'required|string|min:6',
             'role' => 'required|in:admin,dosen,mahasiswa',
+            'nim' => 'nullable|string|max:30|unique:users,nim',
+            'nidn' => 'nullable|string|max:30|unique:users,nidn',
+            'no_hp' => 'nullable|string|max:20',
+            'alamat' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -57,7 +62,13 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
+            'nim' => $request->nim,
+            'nidn' => $request->nidn,
+            'no_hp' => $request->no_hp,
+            'alamat' => $request->alamat,
         ]);
+
+        AuditLog::record('create_user', "Membuat user {$user->nama} ({$user->role})");
 
         return response()->json([
             'success' => true,
@@ -106,6 +117,10 @@ class UserController extends Controller
             'email' => 'sometimes|required|email|unique:users,email,' . $id . '|max:100',
             'password' => 'sometimes|required|string|min:6',
             'role' => 'sometimes|required|in:admin,dosen,mahasiswa',
+            'nim' => 'sometimes|nullable|string|max:30|unique:users,nim,' . $id,
+            'nidn' => 'sometimes|nullable|string|max:30|unique:users,nidn,' . $id,
+            'no_hp' => 'sometimes|nullable|string|max:20',
+            'alamat' => 'sometimes|nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -127,6 +142,18 @@ class UserController extends Controller
         }
         if ($request->has('role')) {
             $user->role = $request->role;
+        }
+        if ($request->has('nim')) {
+            $user->nim = $request->nim;
+        }
+        if ($request->has('nidn')) {
+            $user->nidn = $request->nidn;
+        }
+        if ($request->has('no_hp')) {
+            $user->no_hp = $request->no_hp;
+        }
+        if ($request->has('alamat')) {
+            $user->alamat = $request->alamat;
         }
 
         $user->save();
@@ -153,6 +180,8 @@ class UserController extends Controller
         }
 
         $user->delete();
+
+        AuditLog::record('delete_user', "Menghapus user {$user->nama} ({$user->role})");
 
         return response()->json([
             'success' => true,
@@ -189,12 +218,14 @@ class UserController extends Controller
         $user->password = Hash::make($request->new_password);
         $user->save();
 
+        AuditLog::record('reset_password_user', "Admin reset password user {$user->nama}");
+
         return response()->json([
             'success' => true,
             'message' => 'Password berhasil direset',
             'data' => [
                 'user_id' => $user->id,
-                'name' => $user->name,
+                'name' => $user->nama,
                 'email' => $user->email
             ]
         ], 200);

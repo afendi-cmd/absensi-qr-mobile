@@ -995,3 +995,302 @@
     PAGES.scan = PG.scan;
     PAGES.riwayat = PG.riwayat;
 })();
+
+/* =========================================================
+ * NILAI / IZIN-SAKIT / AUDIT LOG PAGES
+ * ========================================================= */
+(() => {
+    const { pageHeader, emptyState, statCard, fileUrl } = window.JAYQ;
+    const { val, formErr } = window.__JAYQ_HELPERS;
+    const PAGES = window.PAGES;
+    const PG = (window.PG = window.PG || {});
+    const me = () => API.user() || {};
+
+    const GRADE_BADGE = { A: 'badge-green', B: 'badge-blue', C: 'badge-yellow', D: 'badge-purple', E: 'badge-red' };
+    const STATUS_BADGE = { pending: 'badge-yellow', disetujui: 'badge-green', ditolak: 'badge-red' };
+    const fmtN = (v) => (v === null || v === undefined || v === '') ? '-' : v;
+
+    async function dosenMK() {
+        const r = await API.get('/mata-kuliah/dosen/me');
+        return (r.data && r.data.data) || [];
+    }
+
+    /* ================= NILAI ================= */
+    PAGES.nilai = (view) => {
+        const r = me().role;
+        if (r === 'admin') return PG.nilaiAdmin(view);
+        if (r === 'dosen') return PG.nilaiDosen(view);
+        return PG.nilaiMhs(view);
+    };
+
+    PG.nilaiAdmin = async (view) => {
+        view.innerHTML = pageHeader('Data Nilai', 'Rekap nilai seluruh mahasiswa') + UI.skeletonTable();
+        const { data } = await API.get('/nilai');
+        const list = (data && data.data) || [];
+        view.innerHTML = pageHeader('Data Nilai', 'Rekap nilai seluruh mahasiswa') +
+            (list.length ? `<div class="card overflow-hidden animate-fade-up"><div class="overflow-x-auto"><table class="tbl">
+            <thead><tr><th>Mahasiswa</th><th>Mata Kuliah</th><th>Tugas</th><th>UTS</th><th>UAS</th><th>Akhir</th><th>Grade</th><th>Dosen</th></tr></thead><tbody>
+            ${list.map(n => `<tr>
+                <td class="text-white font-semibold">${UI.esc((n.mahasiswa||{}).nama||'-')}<p class="text-xs text-slate-500">${UI.esc((n.mahasiswa||{}).nim||'')}</p></td>
+                <td>${UI.esc((n.mata_kuliah||{}).nama_mk||'-')}</td>
+                <td>${fmtN(n.nilai_tugas)}</td><td>${fmtN(n.nilai_uts)}</td><td>${fmtN(n.nilai_uas)}</td>
+                <td class="font-bold text-white">${fmtN(n.nilai_akhir)}</td>
+                <td>${n.grade?`<span class="badge ${GRADE_BADGE[n.grade]||'badge-slate'}">${n.grade}</span>`:'-'}</td>
+                <td>${UI.esc((n.dosen||{}).nama||'-')}</td>
+            </tr>`).join('')}
+            </tbody></table></div></div>` : emptyState('Belum ada data nilai.', 'star'));
+    };
+
+    PG.nilaiDosen = async (view) => {
+        view.innerHTML = pageHeader('Input Nilai', 'Kelola nilai mahasiswa per mata kuliah') + `<div class="skeleton h-12 w-72"></div>`;
+        const mks = await dosenMK();
+        if (!mks.length) { view.innerHTML = pageHeader('Input Nilai', '') + emptyState('Anda belum mengampu mata kuliah.', 'book'); return; }
+
+        view.innerHTML = pageHeader('Input Nilai', 'Kelola nilai mahasiswa per mata kuliah') + `
+            <div class="flex flex-wrap items-center gap-3 mb-5">
+                <select id="nl-mk" class="select max-w-xs">${mks.map(m=>`<option value="${m.id}">${UI.esc(m.nama_mk)} (${UI.esc(m.kode_mk)})</option>`).join('')}</select>
+                <button class="btn btn-primary" id="nl-add">${UI.icon('plus','w-4 h-4')} Input Nilai</button>
+            </div>
+            <div id="nl-body">${UI.skeletonTable()}</div>`;
+
+        const sel = document.getElementById('nl-mk');
+        const loadList = async () => {
+            const mkId = sel.value;
+            document.getElementById('nl-body').innerHTML = UI.skeletonTable();
+            const [nRes, pRes] = await Promise.all([
+                API.get(`/nilai/mata-kuliah/${mkId}`),
+                API.get(`/mata-kuliah/${mkId}/peserta`)
+            ]);
+            const nilai = (nRes.data && nRes.data.data) || [];
+            const peserta = ((pRes.data && pRes.data.data && pRes.data.data.peserta) || []);
+            window.__nl_peserta = peserta;
+            window.__nl_nilai = nilai;
+            document.getElementById('nl-body').innerHTML = nilai.length ? `<div class="card overflow-hidden animate-fade-up"><div class="overflow-x-auto"><table class="tbl">
+                <thead><tr><th>Mahasiswa</th><th>Tugas</th><th>UTS</th><th>UAS</th><th>Akhir</th><th>Grade</th><th>Aksi</th></tr></thead><tbody>
+                ${nilai.map(n => `<tr>
+                    <td class="text-white font-semibold">${UI.esc((n.mahasiswa||{}).nama||'-')}<p class="text-xs text-slate-500">${UI.esc((n.mahasiswa||{}).nim||'')}</p></td>
+                    <td>${fmtN(n.nilai_tugas)}</td><td>${fmtN(n.nilai_uts)}</td><td>${fmtN(n.nilai_uas)}</td>
+                    <td class="font-bold text-white">${fmtN(n.nilai_akhir)}</td>
+                    <td>${n.grade?`<span class="badge ${GRADE_BADGE[n.grade]||'badge-slate'}">${n.grade}</span>`:'-'}</td>
+                    <td><div class="flex gap-1">
+                        <button class="btn btn-ghost btn-sm ed" data-id="${n.id}" data-mid="${n.mahasiswa_id}">${UI.icon('edit','w-4 h-4')}</button>
+                        <button class="btn btn-ghost btn-sm del text-rose-300" data-id="${n.id}">${UI.icon('trash','w-4 h-4')}</button>
+                    </div></td></tr>`).join('')}
+                </tbody></table></div></div>` : emptyState('Belum ada nilai untuk mata kuliah ini.', 'star');
+            document.querySelectorAll('#nl-body .ed').forEach(b => b.onclick = () => nilaiForm(mkId, b.dataset.mid));
+            document.querySelectorAll('#nl-body .del').forEach(b => b.onclick = async () => {
+                if (!await UI.confirm({ message: 'Hapus nilai ini?' })) return;
+                const r = await API.del(`/nilai/${b.dataset.id}`);
+                if (r.ok) { UI.toast('success', 'Nilai dihapus'); loadList(); } else UI.toast('error', 'Gagal', formErr(r.data));
+            });
+        };
+        sel.onchange = loadList;
+        document.getElementById('nl-add').onclick = () => nilaiForm(sel.value, null);
+        loadList();
+
+        function nilaiForm(mkId, mahasiswaId) {
+            const peserta = window.__nl_peserta || [];
+            const existing = (window.__nl_nilai || []).find(n => n.mahasiswa_id == mahasiswaId);
+            UI.modal({
+                title: existing ? 'Edit Nilai' : 'Input Nilai', size: 'sm',
+                body: `<form id="nf" class="space-y-3">
+                    <div><label class="label">Mahasiswa</label><select id="nf-mhs" class="select" ${mahasiswaId?'disabled':''}>${peserta.map(p=>`<option value="${(p.mahasiswa||{}).id}" ${mahasiswaId==(p.mahasiswa||{}).id?'selected':''}>${UI.esc((p.mahasiswa||{}).nama||'-')}</option>`).join('')}</select></div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div><label class="label">Tugas</label><input id="nf-tugas" type="number" min="0" max="100" class="input" value="${existing?fmtN(existing.nilai_tugas).replace('-',''):''}"></div>
+                        <div><label class="label">UTS</label><input id="nf-uts" type="number" min="0" max="100" class="input" value="${existing?fmtN(existing.nilai_uts).replace('-',''):''}"></div>
+                        <div><label class="label">UAS</label><input id="nf-uas" type="number" min="0" max="100" class="input" value="${existing?fmtN(existing.nilai_uas).replace('-',''):''}"></div>
+                    </div>
+                    <div><label class="label">Catatan</label><textarea id="nf-cat" class="textarea" rows="2">${existing?UI.esc(existing.catatan||''):''}</textarea></div>
+                    <p class="text-xs text-slate-500">Nilai akhir otomatis: Tugas 30% • UTS 30% • UAS 40%</p>
+                </form>`,
+                footer: `<button class="btn btn-ghost" onclick="UI.closeModal()">Batal</button><button class="btn btn-primary" id="nf-save">Simpan</button>`,
+                onMount: () => { document.getElementById('nf-save').onclick = async () => {
+                    const payload = {
+                        mahasiswa_id: parseInt(mahasiswaId || val('nf-mhs')),
+                        mata_kuliah_id: parseInt(mkId),
+                        nilai_tugas: val('nf-tugas') === '' ? null : parseFloat(val('nf-tugas')),
+                        nilai_uts: val('nf-uts') === '' ? null : parseFloat(val('nf-uts')),
+                        nilai_uas: val('nf-uas') === '' ? null : parseFloat(val('nf-uas')),
+                        catatan: val('nf-cat'),
+                    };
+                    const r = await API.post('/nilai', payload);
+                    if (r.ok && r.data.success) { UI.closeModal(); UI.toast('success', 'Nilai disimpan', `Akhir ${r.data.data.nilai_akhir ?? '-'} (${r.data.data.grade ?? '-'})`); loadList(); }
+                    else UI.toast('error', 'Gagal', formErr(r.data));
+                }; }
+            });
+        }
+    };
+
+    PG.nilaiMhs = async (view) => {
+        view.innerHTML = pageHeader('Nilai & Transkrip', 'Rekap nilai Anda') + UI.skeletonCards(2);
+        const { data } = await API.get('/nilai/me');
+        const d = (data && data.data) || {};
+        const list = d.nilai || [];
+        view.innerHTML = pageHeader('Nilai & Transkrip', 'Rekap nilai Anda') + `
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
+                ${statCard('IPK', d.ipk ?? '-', 'star', 'brand')}
+                ${statCard('Total SKS', d.total_sks ?? 0, 'graduation', 'cyan')}
+                ${statCard('Mata Kuliah Dinilai', list.length, 'book', 'green')}
+            </div>` +
+            (list.length ? `<div class="card overflow-hidden animate-fade-up"><div class="overflow-x-auto"><table class="tbl">
+            <thead><tr><th>Mata Kuliah</th><th>SKS</th><th>Tugas</th><th>UTS</th><th>UAS</th><th>Akhir</th><th>Grade</th></tr></thead><tbody>
+            ${list.map(n => `<tr>
+                <td class="text-white font-semibold">${UI.esc((n.mata_kuliah||{}).nama_mk||'-')}<p class="text-xs text-slate-500">${UI.esc((n.mata_kuliah||{}).kode_mk||'')}</p></td>
+                <td>${fmtN((n.mata_kuliah||{}).sks)}</td>
+                <td>${fmtN(n.nilai_tugas)}</td><td>${fmtN(n.nilai_uts)}</td><td>${fmtN(n.nilai_uas)}</td>
+                <td class="font-bold text-white">${fmtN(n.nilai_akhir)}</td>
+                <td>${n.grade?`<span class="badge ${GRADE_BADGE[n.grade]||'badge-slate'}">${n.grade}</span>`:'-'}</td>
+            </tr>`).join('')}
+            </tbody></table></div></div>` : emptyState('Belum ada nilai yang diinput dosen.', 'star'));
+    };
+
+    /* ================= IZIN / SAKIT ================= */
+    PAGES.izin = (view) => {
+        const r = me().role;
+        if (r === 'admin') return PG.izinAdmin(view);
+        if (r === 'dosen') return PG.izinDosen(view);
+        return PG.izinMhs(view);
+    };
+
+    function izinRow(z, withMhs) {
+        return `<tr>
+            ${withMhs?`<td class="text-white font-semibold">${UI.esc((z.mahasiswa||{}).nama||'-')}<p class="text-xs text-slate-500">${UI.esc((z.mahasiswa||{}).nim||'')}</p></td>`:''}
+            <td><span class="badge ${z.jenis==='sakit'?'badge-red':'badge-blue'}">${UI.esc(z.jenis)}</span></td>
+            <td>${UI.fmtDate(z.tanggal)}</td>
+            <td>${UI.esc((z.mata_kuliah||{}).nama_mk||'-')}</td>
+            <td class="max-w-xs"><p class="truncate">${UI.esc(z.alasan)}</p></td>
+            <td><span class="badge ${STATUS_BADGE[z.status]||'badge-slate'}">${UI.esc(z.status)}</span></td>
+            <td>${z.file_surat?`<a href="${fileUrl(z.file_surat)}" target="_blank" class="btn btn-ghost btn-sm">${UI.icon('download','w-4 h-4')}</a>`:'-'}</td>
+        </tr>`;
+    }
+
+    PG.izinAdmin = async (view) => {
+        view.innerHTML = pageHeader('Izin / Sakit', 'Seluruh pengajuan mahasiswa') + UI.skeletonTable();
+        const { data } = await API.get('/izin-sakit/all');
+        const list = (data && data.data) || [];
+        view.innerHTML = pageHeader('Izin / Sakit', 'Seluruh pengajuan mahasiswa') +
+            (list.length ? `<div class="card overflow-hidden animate-fade-up"><div class="overflow-x-auto"><table class="tbl">
+            <thead><tr><th>Mahasiswa</th><th>Jenis</th><th>Tanggal</th><th>Mata Kuliah</th><th>Alasan</th><th>Status</th><th>Surat</th></tr></thead>
+            <tbody>${list.map(z => izinRow(z, true)).join('')}</tbody></table></div></div>` : emptyState('Belum ada pengajuan.', 'calendar'));
+    };
+
+    PG.izinDosen = async (view) => {
+        async function load() {
+            view.innerHTML = pageHeader('Izin / Sakit', 'Tinjau pengajuan mahasiswa') + UI.skeletonTable();
+            const { data } = await API.get('/izin-sakit');
+            const list = (data && data.data) || [];
+            view.innerHTML = pageHeader('Izin / Sakit', 'Tinjau pengajuan mahasiswa') +
+                (list.length ? `<div class="space-y-3">${list.map(z => `
+                    <div class="card p-5 animate-fade-up">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-cyan-400 flex items-center justify-center text-xs font-bold">${UI.initials((z.mahasiswa||{}).nama)}</div>
+                                <div><p class="font-semibold text-white">${UI.esc((z.mahasiswa||{}).nama||'-')}</p><p class="text-xs text-slate-500">${UI.esc((z.mahasiswa||{}).nim||'')} • ${UI.esc((z.mata_kuliah||{}).nama_mk||'-')}</p></div>
+                            </div>
+                            <span class="badge ${STATUS_BADGE[z.status]||'badge-slate'}">${UI.esc(z.status)}</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-3 text-xs text-slate-400">
+                            <span class="badge ${z.jenis==='sakit'?'badge-red':'badge-blue'}">${UI.esc(z.jenis)}</span>
+                            <span>${UI.fmtDate(z.tanggal)}</span>
+                            ${z.file_surat?`<a href="${fileUrl(z.file_surat)}" target="_blank" class="text-brand-300 hover:underline">Lihat surat</a>`:''}
+                        </div>
+                        <p class="text-sm text-slate-300 mt-2">${UI.esc(z.alasan)}</p>
+                        ${z.status==='pending'?`<div class="flex gap-2 mt-4">
+                            <button class="btn btn-primary btn-sm rv" data-id="${z.id}" data-s="disetujui">${UI.icon('check','w-4 h-4')} Setujui</button>
+                            <button class="btn btn-danger btn-sm rv" data-id="${z.id}" data-s="ditolak">${UI.icon('x','w-4 h-4')} Tolak</button>
+                        </div>`:(z.catatan?`<p class="text-xs text-slate-500 mt-3 border-t border-white/5 pt-2">Catatan: ${UI.esc(z.catatan)}</p>`:'')}
+                    </div>`).join('')}</div>` : emptyState('Belum ada pengajuan untuk mata kuliah Anda.', 'calendar'));
+            view.querySelectorAll('.rv').forEach(b => b.onclick = () => reviewForm(b.dataset.id, b.dataset.s));
+        }
+        load();
+        function reviewForm(id, status) {
+            UI.modal({
+                title: status === 'disetujui' ? 'Setujui Pengajuan' : 'Tolak Pengajuan', size: 'sm',
+                body: `<div><label class="label">Catatan ${status==='ditolak'?'(alasan penolakan)':'(opsional)'}</label><textarea id="rv-cat" class="textarea" rows="3"></textarea></div>`,
+                footer: `<button class="btn btn-ghost" onclick="UI.closeModal()">Batal</button><button class="btn ${status==='disetujui'?'btn-primary':'btn-danger'}" id="rv-save">Konfirmasi</button>`,
+                onMount: () => { document.getElementById('rv-save').onclick = async () => {
+                    const r = await API.put(`/izin-sakit/${id}/review`, { status, catatan: val('rv-cat') });
+                    if (r.ok && r.data.success) { UI.closeModal(); UI.toast('success', 'Pengajuan ditinjau'); load(); }
+                    else UI.toast('error', 'Gagal', formErr(r.data));
+                }; }
+            });
+        }
+    };
+
+    PG.izinMhs = async (view) => {
+        const head = pageHeader('Izin / Sakit', 'Ajukan & pantau pengajuan Anda',
+            `<button class="btn btn-primary" id="iz-add">${UI.icon('plus','w-4 h-4')} Ajukan</button>`);
+        async function load() {
+            view.innerHTML = head + UI.skeletonTable();
+            const { data } = await API.get('/izin-sakit/me');
+            const list = (data && data.data) || [];
+            view.innerHTML = head + (list.length ? `<div class="space-y-3">${list.map(z => `
+                <div class="card p-5 animate-fade-up">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="badge ${z.jenis==='sakit'?'badge-red':'badge-blue'}">${UI.esc(z.jenis)}</span>
+                            <span class="text-xs text-slate-400">${UI.fmtDate(z.tanggal)}</span>
+                        </div>
+                        <span class="badge ${STATUS_BADGE[z.status]||'badge-slate'}">${UI.esc(z.status)}</span>
+                    </div>
+                    <p class="text-sm text-slate-300 mt-2">${UI.esc(z.alasan)}</p>
+                    <p class="text-xs text-slate-500 mt-1">${UI.esc((z.mata_kuliah||{}).nama_mk||'Umum')}</p>
+                    ${z.catatan?`<p class="text-xs text-slate-400 mt-2 border-t border-white/5 pt-2">Catatan dosen: ${UI.esc(z.catatan)}</p>`:''}
+                </div>`).join('')}</div>` : emptyState('Belum ada pengajuan.', 'calendar'));
+            document.getElementById('iz-add').onclick = ajukanForm;
+        }
+        load();
+        async function ajukanForm() {
+            const mk = await API.get('/mata-kuliah/mahasiswa/me');
+            const mks = (mk.data && mk.data.data) || [];
+            UI.modal({
+                title: 'Ajukan Izin / Sakit', size: 'sm',
+                body: `<form id="izf" class="space-y-3">
+                    <div><label class="label">Jenis</label><select id="iz-jenis" class="select"><option value="izin">Izin</option><option value="sakit">Sakit</option></select></div>
+                    <div><label class="label">Tanggal</label><input id="iz-tgl" type="date" class="input" required></div>
+                    <div><label class="label">Mata Kuliah <span class="text-xs text-slate-500">(opsional)</span></label><select id="iz-mk" class="select"><option value="">— Umum —</option>${mks.map(m=>`<option value="${m.id}">${UI.esc(m.nama_mk)}</option>`).join('')}</select></div>
+                    <div><label class="label">Alasan</label><textarea id="iz-alasan" class="textarea" rows="3" required></textarea></div>
+                    <div><label class="label">Surat <span class="text-xs text-slate-500">(pdf/jpg/png, opsional)</span></label><input id="iz-file" type="file" accept=".pdf,.jpg,.jpeg,.png" class="input"></div>
+                </form>`,
+                footer: `<button class="btn btn-ghost" onclick="UI.closeModal()">Batal</button><button class="btn btn-primary" id="iz-save">Kirim</button>`,
+                onMount: () => { document.getElementById('iz-save').onclick = async () => {
+                    if (!val('iz-tgl') || !val('iz-alasan')) return UI.toast('warning', 'Lengkapi tanggal & alasan');
+                    const fd = new FormData();
+                    fd.append('jenis', val('iz-jenis'));
+                    fd.append('tanggal', val('iz-tgl'));
+                    fd.append('alasan', val('iz-alasan'));
+                    if (val('iz-mk')) fd.append('mata_kuliah_id', val('iz-mk'));
+                    const f = document.getElementById('iz-file').files[0];
+                    if (f) fd.append('file_surat', f);
+                    const r = await API.postForm('/izin-sakit', fd);
+                    if (r.ok && r.data.success) { UI.closeModal(); UI.toast('success', 'Pengajuan terkirim'); load(); }
+                    else UI.toast('error', 'Gagal', formErr(r.data));
+                }; }
+            });
+        }
+    };
+
+    /* ================= AUDIT LOG ================= */
+    PAGES.audit = async (view) => {
+        view.innerHTML = pageHeader('Audit Log', 'Catatan aktivitas sistem') + UI.skeletonTable();
+        const { data } = await API.get('/audit-logs?limit=100');
+        const list = (data && data.data) || [];
+        const actionBadge = (a) => {
+            if (a.includes('delete')) return 'badge-red';
+            if (a.includes('login') || a.includes('register')) return 'badge-green';
+            if (a.includes('reset') || a.includes('review')) return 'badge-yellow';
+            return 'badge-blue';
+        };
+        view.innerHTML = pageHeader('Audit Log', 'Catatan aktivitas sistem') +
+            (list.length ? `<div class="card overflow-hidden animate-fade-up"><div class="overflow-x-auto"><table class="tbl">
+            <thead><tr><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Deskripsi</th><th>IP</th></tr></thead><tbody>
+            ${list.map(l => `<tr>
+                <td class="whitespace-nowrap">${UI.fmtDateTime(l.created_at)}</td>
+                <td class="text-white">${UI.esc((l.user||{}).nama||'Sistem')}</td>
+                <td><span class="badge ${actionBadge(l.action)}">${UI.esc(l.action)}</span></td>
+                <td>${UI.esc(l.description||'-')}</td>
+                <td class="text-xs text-slate-500">${UI.esc(l.ip_address||'-')}</td>
+            </tr>`).join('')}
+            </tbody></table></div></div>` : emptyState('Belum ada catatan aktivitas.', 'history'));
+    };
+})();
