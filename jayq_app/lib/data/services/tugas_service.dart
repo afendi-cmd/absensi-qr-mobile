@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'storage_service.dart';
+import '../../core/constants/app_constants.dart';
 
 class TugasService {
   final Dio _dio;
   final StorageService _storageService = StorageService();
-  final String baseUrl = 'http://192.168.1.9:8000/api';
+  final String baseUrl = AppConstants.baseUrl;
 
   TugasService() : _dio = Dio() {
     _dio.options.baseUrl = baseUrl;
@@ -145,8 +146,8 @@ class TugasService {
     try {
       final token = await _storageService.getToken();
 
-      final response = await _dio.post(
-        '/tugas/pengumpulan/$pengumpulanId/nilai',
+      final response = await _dio.put(
+        '/pengumpulan-tugas/$pengumpulanId/nilai',
         data: {'nilai': nilai, 'catatan': catatan},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
@@ -201,7 +202,7 @@ class TugasService {
       }
 
       final response = await _dio.get(
-        '/tugas/mahasiswa',
+        '/tugas/mahasiswa/me',
         queryParameters: queryParams,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
@@ -235,7 +236,7 @@ class TugasService {
       });
 
       final response = await _dio.post(
-        '/tugas/upload',
+        '/upload-tugas',
         data: formData,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
@@ -257,6 +258,6 @@ class TugasService {
   }
 
   String getDownloadUrl(String filePath) {
-    return '$baseUrl/storage/$filePath';
+    return '${baseUrl.replaceAll('/api', '')}/storage/$filePath';
   }
 }

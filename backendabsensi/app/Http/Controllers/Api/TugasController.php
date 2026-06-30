@@ -7,6 +7,7 @@ use App\Models\Tugas;
 use App\Models\PengumpulanTugas;
 use App\Models\MataKuliah;
 use App\Models\PesertaMk;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -81,6 +82,8 @@ class TugasController extends Controller
 
         $tugas = Tugas::create($data);
         $tugas->load('mataKuliah:id,nama_mk,kode_mk');
+
+        AuditLog::record('Tugas', 'Create', "Membuat tugas \"{$tugas->judul}\"", $request->user()->id);
 
         return response()->json([
             'success' => true,

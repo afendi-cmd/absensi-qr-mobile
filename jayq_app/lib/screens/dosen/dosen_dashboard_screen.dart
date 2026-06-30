@@ -8,6 +8,8 @@ import 'generate_qr_screen.dart';
 import 'mata_kuliah_detail_screen.dart';
 import 'rekap_kehadiran_screen.dart';
 import 'pengumuman_dosen_screen.dart';
+import 'nilai_dosen_screen.dart';
+import 'izin_sakit_dosen_screen.dart';
 
 class DosenDashboardScreen extends StatefulWidget {
   const DosenDashboardScreen({super.key});
@@ -311,7 +313,28 @@ class _DosenDashboardScreenState extends State<DosenDashboardScreen> {
             icon: Icons.edit_document,
             label: 'Input Nilai',
             onTap: () {
-              setState(() => _selectedIndex = 1);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NilaiDosenScreen(),
+                ),
+              );
+            },
+            isDark: isDark,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildQuickActionCard(
+            icon: Icons.event_busy_outlined,
+            label: 'Izin /\nSakit',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const IzinSakitDosenScreen(),
+                ),
+              );
             },
             isDark: isDark,
           ),

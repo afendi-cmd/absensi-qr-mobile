@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pengumuman;
 use App\Models\PengumumanRead;
 use App\Models\User;
+use App\Models\AuditLog;
 use App\Services\FcmService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -99,6 +100,8 @@ class PengumumanController extends Controller
 
             // Send FCM notification to target users
             $this->sendPengumumanNotification($pengumuman);
+
+            AuditLog::record('Pengumuman', 'Create', "Membuat pengumuman \"{$pengumuman->judul}\"", $request->user()->id);
 
             return response()->json([
                 'success' => true,

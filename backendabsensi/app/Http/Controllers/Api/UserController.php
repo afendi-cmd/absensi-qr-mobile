@@ -68,7 +68,7 @@ class UserController extends Controller
             'alamat' => $request->alamat,
         ]);
 
-        AuditLog::record('create_user', "Membuat user {$user->nama} ({$user->role})");
+        AuditLog::record('Manajemen User', 'Create', "Membuat user {$user->nama} ({$user->role})");
 
         return response()->json([
             'success' => true,
@@ -181,7 +181,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        AuditLog::record('delete_user', "Menghapus user {$user->nama} ({$user->role})");
+        AuditLog::record('Manajemen User', 'Delete', "Menghapus user {$user->nama} ({$user->role})");
 
         return response()->json([
             'success' => true,
@@ -218,7 +218,7 @@ class UserController extends Controller
         $user->password = Hash::make($request->new_password);
         $user->save();
 
-        AuditLog::record('reset_password_user', "Admin reset password user {$user->nama}");
+        AuditLog::record('Manajemen User', 'Reset Password', "Reset password user {$user->nama}");
 
         return response()->json([
             'success' => true,

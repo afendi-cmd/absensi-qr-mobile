@@ -110,7 +110,7 @@ class NilaiController extends Controller
 
         $nilai->load(['mahasiswa:id,nama,nim', 'mataKuliah:id,nama_mk,kode_mk']);
 
-        AuditLog::record('input_nilai', "Input nilai mahasiswa #{$request->mahasiswa_id} pada MK #{$request->mata_kuliah_id}");
+        AuditLog::record('Nilai', 'Input', "Input nilai mahasiswa #{$request->mahasiswa_id} pada MK #{$request->mata_kuliah_id}");
 
         return response()->json([
             'success' => true,

@@ -134,7 +134,7 @@ class IzinSakitController extends Controller
 
         $izin->load(['mahasiswa:id,nama,nim', 'mataKuliah:id,nama_mk,kode_mk', 'reviewer:id,nama']);
 
-        AuditLog::record('review_izin', "Pengajuan #{$izin->id} di-{$request->status}");
+        AuditLog::record('Izin/Sakit', 'Review', "Pengajuan #{$izin->id} di-{$request->status}");
 
         return response()->json([
             'success' => true,

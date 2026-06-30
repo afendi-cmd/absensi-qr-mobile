@@ -27,7 +27,7 @@ class AppConstants {
   //    Backend harus jalan dengan: php artisan serve --host=0.0.0.0
   // static const String baseUrl =
   static const String baseUrl =
-      "http://10.100.86.194:8000/api"; // Ganti dengan IP Anda
+      "http://192.168.100.39:8000/api"; // Ganti dengan IP Anda
 
   // 4. Untuk iOS Simulator
   //    Gunakan saat: flutter run -d ios

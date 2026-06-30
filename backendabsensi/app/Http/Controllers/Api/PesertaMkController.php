@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PesertaMk;
 use App\Models\MataKuliah;
 use App\Models\User;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -53,6 +54,8 @@ class PesertaMkController extends Controller
         $peserta = PesertaMk::create($request->all());
         $peserta->load('mahasiswa:id,nama,email,role', 'mataKuliah:id,nama_mk,kode_mk');
 
+        AuditLog::record('Peserta MK', 'Add', "Menambah {$peserta->mahasiswa->nama} ke {$peserta->mataKuliah->nama_mk}");
+
         // Format response
         $response = [
             'id' => $peserta->id,
@@ -96,6 +99,8 @@ class PesertaMkController extends Controller
         }
 
         $peserta->delete();
+
+        AuditLog::record('Peserta MK', 'Remove', "Menghapus peserta #{$peserta->mahasiswa_id} dari MK #{$peserta->mata_kuliah_id}");
 
         return response()->json([
             'success' => true,

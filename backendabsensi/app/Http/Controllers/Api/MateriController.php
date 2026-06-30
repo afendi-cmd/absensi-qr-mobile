@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Materi;
 use App\Models\MataKuliah;
 use App\Models\PesertaMk;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -79,6 +80,8 @@ class MateriController extends Controller
         ]);
 
         $materi->load('mataKuliah:id,nama_mk,kode_mk');
+
+        AuditLog::record('Materi', 'Upload', "Upload materi \"{$materi->judul}\"", $request->user()->id);
 
         return response()->json([
             'success' => true,

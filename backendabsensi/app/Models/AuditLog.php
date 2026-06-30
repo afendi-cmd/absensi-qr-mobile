@@ -15,6 +15,7 @@ class AuditLog extends Model
 
     protected $fillable = [
         'user_id',
+        'module',
         'action',
         'description',
         'ip_address',
@@ -32,11 +33,17 @@ class AuditLog extends Model
 
     /**
      * Helper untuk mencatat aktivitas dengan mudah.
+     *
+     * @param string      $module      Nama modul (mis. "Autentikasi", "Nilai", "Absensi")
+     * @param string      $action      Aksi singkat (mis. "Login", "Input", "Delete")
+     * @param string|null $description  Deskripsi detail
+     * @param int|null    $userId       ID pengguna (default: user yang sedang login)
      */
-    public static function record(string $action, ?string $description = null, ?int $userId = null): self
+    public static function record(string $module, string $action, ?string $description = null, ?int $userId = null): self
     {
         return static::create([
             'user_id' => $userId ?? optional(auth()->user())->id,
+            'module' => $module,
             'action' => $action,
             'description' => $description,
             'ip_address' => request()->ip(),

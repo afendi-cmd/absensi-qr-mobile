@@ -1273,24 +1273,30 @@
     /* ================= AUDIT LOG ================= */
     PAGES.audit = async (view) => {
         view.innerHTML = pageHeader('Audit Log', 'Catatan aktivitas sistem') + UI.skeletonTable();
-        const { data } = await API.get('/audit-logs?limit=100');
+        const { data } = await API.get('/audit-logs?limit=200');
         const list = (data && data.data) || [];
+        const ROLE_LABEL = { admin: 'Admin', dosen: 'Dosen', mahasiswa: 'Mahasiswa' };
+        const ROLE_BADGE = { admin: 'badge-purple', dosen: 'badge-blue', mahasiswa: 'badge-green' };
         const actionBadge = (a) => {
-            if (a.includes('delete')) return 'badge-red';
-            if (a.includes('login') || a.includes('register')) return 'badge-green';
-            if (a.includes('reset') || a.includes('review')) return 'badge-yellow';
+            const x = (a || '').toLowerCase();
+            if (x.includes('delete') || x.includes('remove') || x.includes('tolak')) return 'badge-red';
+            if (x.includes('login') || x.includes('register') || x.includes('create') || x.includes('add')) return 'badge-green';
+            if (x.includes('reset') || x.includes('review') || x.includes('input') || x.includes('upload')) return 'badge-yellow';
             return 'badge-blue';
         };
         view.innerHTML = pageHeader('Audit Log', 'Catatan aktivitas sistem') +
             (list.length ? `<div class="card overflow-hidden animate-fade-up"><div class="overflow-x-auto"><table class="tbl">
-            <thead><tr><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Deskripsi</th><th>IP</th></tr></thead><tbody>
-            ${list.map(l => `<tr>
+            <thead><tr><th>Waktu</th><th>Pengguna</th><th>Role</th><th>Modul</th><th>Aksi</th><th>Deskripsi</th></tr></thead><tbody>
+            ${list.map(l => {
+                const role = (l.user || {}).role;
+                return `<tr>
                 <td class="whitespace-nowrap">${UI.fmtDateTime(l.created_at)}</td>
-                <td class="text-white">${UI.esc((l.user||{}).nama||'Sistem')}</td>
+                <td class="text-white font-semibold">${UI.esc((l.user||{}).nama||'Sistem')}</td>
+                <td>${role?`<span class="badge ${ROLE_BADGE[role]||'badge-slate'}">${ROLE_LABEL[role]||role}</span>`:'-'}</td>
+                <td>${UI.esc(l.module||'-')}</td>
                 <td><span class="badge ${actionBadge(l.action)}">${UI.esc(l.action)}</span></td>
                 <td>${UI.esc(l.description||'-')}</td>
-                <td class="text-xs text-slate-500">${UI.esc(l.ip_address||'-')}</td>
-            </tr>`).join('')}
+            </tr>`; }).join('')}
             </tbody></table></div></div>` : emptyState('Belum ada catatan aktivitas.', 'history'));
     };
 })();

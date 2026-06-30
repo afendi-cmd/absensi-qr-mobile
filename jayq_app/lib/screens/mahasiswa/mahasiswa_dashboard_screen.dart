@@ -11,6 +11,8 @@ import 'history_screen.dart';
 import 'profile_screen.dart';
 import 'pengumuman_screen.dart';
 import 'tugas_materi_screen.dart';
+import 'nilai_screen.dart';
+import 'izin_sakit_screen.dart';
 
 class MahasiswaDashboardScreen extends StatefulWidget {
   const MahasiswaDashboardScreen({super.key});
@@ -276,6 +278,42 @@ class _MahasiswaDashboardScreenState extends State<MahasiswaDashboardScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const TugasMateriScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          icon: Icons.grade_outlined,
+                          label: 'Nilai &\nTranskrip',
+                          iconColor: const Color(0xFF8B5CF6),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NilaiScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          icon: Icons.event_busy_outlined,
+                          label: 'Izin / Sakit',
+                          iconColor: const Color(0xFFF59E0B),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const IzinSakitScreen(),
                               ),
                             );
                           },

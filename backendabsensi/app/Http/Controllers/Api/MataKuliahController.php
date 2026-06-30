@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\MataKuliah;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -55,6 +56,8 @@ class MataKuliahController extends Controller
 
         $mataKuliah = MataKuliah::create($request->all());
         $mataKuliah->load('dosen:id,nama,email');
+
+        AuditLog::record('Mata Kuliah', 'Create', "Menambah mata kuliah {$mataKuliah->nama_mk} ({$mataKuliah->kode_mk})");
 
         return response()->json([
             'success' => true,
@@ -150,6 +153,8 @@ class MataKuliahController extends Controller
         }
 
         $mataKuliah->delete();
+
+        AuditLog::record('Mata Kuliah', 'Delete', "Menghapus mata kuliah {$mataKuliah->nama_mk} ({$mataKuliah->kode_mk})");
 
         return response()->json([
             'success' => true,

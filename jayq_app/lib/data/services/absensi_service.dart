@@ -11,7 +11,7 @@ class AbsensiService {
     try {
       final response = await _dio.post(
         '${AppConstants.baseUrl}/scan-qr',
-        data: {'qr_code': qrCode},
+        data: {'kode_qr': qrCode},
       );
 
       if (response.data['success']) {

@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'storage_service.dart';
+import '../../core/constants/app_constants.dart';
 
 class QrService {
   final Dio _dio;
   final StorageService _storageService = StorageService();
-  final String baseUrl = 'http://192.168.1.9:8000/api';
+  final String baseUrl = AppConstants.baseUrl;
 
   QrService() : _dio = Dio() {
     _dio.options.baseUrl = baseUrl;

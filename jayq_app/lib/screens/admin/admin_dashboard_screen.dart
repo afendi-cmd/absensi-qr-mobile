@@ -13,6 +13,7 @@ import 'admin_history_screen.dart';
 import 'advanced_statistics_screen.dart';
 import 'broadcast_pengumuman_screen.dart';
 import 'notification_center_screen.dart';
+import 'audit_log_screen.dart';
 import '../../data/services/pengumuman_service.dart';
 import '../../data/services/storage_service.dart';
 import 'package:dio/dio.dart';
@@ -648,11 +649,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
       },
+      {
+        'icon': Icons.history,
+        'label': 'Audit Log',
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AuditLogScreen()),
+        ),
+      },
     ];
 
-    // Tampilkan maksimal 8 item (2 baris x 4 kolom)
-    final displayedActions = allActions.take(8).toList();
-    final hasMore = allActions.length > 8;
+    // Tampilkan maksimal 9 item (grid 4 kolom)
+    final displayedActions = allActions.take(9).toList();
+    final hasMore = allActions.length > 9;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

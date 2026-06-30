@@ -44,7 +44,7 @@ class AuthController extends Controller
         // Create token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        AuditLog::record('login', "User {$user->nama} login", $user->id);
+        AuditLog::record('Autentikasi', 'Login', "{$user->nama} berhasil login", $user->id);
 
         return response()->json([
             'success' => true,
@@ -93,7 +93,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        AuditLog::record('register', "Registrasi mahasiswa baru: {$user->nama}", $user->id);
+        AuditLog::record('Autentikasi', 'Register', "Registrasi mahasiswa baru: {$user->nama}", $user->id);
 
         return response()->json([
             'success' => true,
@@ -193,7 +193,7 @@ class AuthController extends Controller
 
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
-        AuditLog::record('reset_password', "Password direset via forgot-password", $user->id);
+        AuditLog::record('Autentikasi', 'Reset Password', "Password direset via lupa password", $user->id);
 
         return response()->json([
             'success' => true,
@@ -207,7 +207,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = $request->user();
-        AuditLog::record('logout', "User {$user->nama} logout", $user->id);
+        AuditLog::record('Autentikasi', 'Logout', "{$user->nama} logout", $user->id);
 
         $user->currentAccessToken()->delete();
 

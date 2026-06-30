@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Absensi;
 use App\Models\QrSession;
 use App\Models\PesertaMk;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -86,6 +87,8 @@ class AbsensiController extends Controller
         ]);
 
         $absensi->load(['mataKuliah:id,nama_mk,kode_mk']);
+
+        AuditLog::record('Absensi', 'Scan QR', "Absen pada {$absensi->mataKuliah->nama_mk}", $request->user()->id);
 
         return response()->json([
             'success' => true,

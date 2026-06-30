@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'storage_service.dart';
+import '../../core/constants/app_constants.dart';
 
 class MateriService {
   final Dio _dio;
   final StorageService _storageService = StorageService();
-  final String baseUrl = 'http://192.168.1.9:8000/api';
+  final String baseUrl = AppConstants.baseUrl;
 
   MateriService() : _dio = Dio() {
     _dio.options.baseUrl = baseUrl;
@@ -116,7 +117,7 @@ class MateriService {
       }
 
       final response = await _dio.get(
-        '/materi/mahasiswa',
+        '/materi/mahasiswa/me',
         queryParameters: queryParams,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
@@ -138,6 +139,6 @@ class MateriService {
   }
 
   String getDownloadUrl(String filePath) {
-    return '$baseUrl/storage/$filePath';
+    return '${baseUrl.replaceAll('/api', '')}/storage/$filePath';
   }
 }

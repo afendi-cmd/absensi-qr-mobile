@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\QrSession;
 use App\Models\MataKuliah;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -50,6 +51,8 @@ class QrController extends Controller
         ]);
 
         $qrSession->load('mataKuliah:id,nama_mk,kode_mk');
+
+        AuditLog::record('Absensi', 'Generate QR', "Generate QR untuk {$mataKuliah->nama_mk} ({$request->duration} mnt)", $request->user()->id);
 
         return response()->json([
             'success' => true,
